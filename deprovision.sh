@@ -1,7 +1,7 @@
 
 function delete_google_kubernetes {
 	kubectl config use-context $CLUSTER_NAME
-	gcloud container clusters create $CLUSTER_NAME --num-nodes=1
+	gcloud container clusters delete $CLUSTER_NAME
 }
 
 function uninstall_helm() {
@@ -36,7 +36,12 @@ function uuninstall_influxdb() {
  	# http://influxdb-influxdb.akkeris:8086
 }
 
+function delete_gcloud_letsencrypt_issuer {
+	gcloud iam service-accounts delete letsencrypt@$PROJECT_ID.iam.gserviceaccount.com
+}
+
 function delete_ssl_site {
+	# gcloud compute addresses delete $HOST --global
 }
 
 
