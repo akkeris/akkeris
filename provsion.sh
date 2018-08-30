@@ -12,13 +12,43 @@
 # DOMAIN ??   export DOMAIN=akkeris-test.io
 # EMAIL ??    export EMAIL=...@gmail.com
 # ISSUER ?? letsencrypt digicert
-# CLUSTER_NAME.  export CLUSTER_NAME=kobayashi
+# CLUSTER_NAME.  
 # TODO: DNS?..
+
+
+# export PROVIDER=gcloud
+# export EMAIL=...
+# export PROJECT_ID=round-exchange-172320
+# export CLUSTER_NAME=kobayashi
+# export ISSUER=letsencrypt
+# export DOMAIN=akkeris-test.io
+# export REGION=us-west1-a
 
 export CONTEXT_NAME="gke_${PROJECT_ID}_${REGION}_${CLUSTER_NAME}"
 export GCLOUD_CLUSTER_VERSION=1.10.6-gke.2
 export JENKINS_PASS=foozle
 
+function wait_for_result {
+  echo -n $message
+  while : ; do
+    RES=`$command`
+    [[ $RES == "" ]] || break
+    sleep 1
+    echo -n .
+  done
+  echo
+}
+
+function wait_for_eq {
+  echo -n $message
+  while : ; do
+    RES=`$command`
+    [[ $RES == "$result" ]] || break
+    sleep 1
+    echo -n .
+  done
+  echo
+}
 function install_gcloud_letsencrypt_issuer {
   # create service account.
   # TODO: figure otu how to do this without using roles/owner
@@ -105,8 +135,7 @@ EOF
 }
 
 function create_gcloud_ssl_site {
-  # $DEPLOYMENT $NAMESPACE $PORT $HOST $ISSUER
-  # kubectl expose deployment $DEPLOYMENT --target-port=$PORT --type=NodePort
+  # params: $DEPLOYMENT $NAMESPACE $PORT $HOST $ISSUER
   read -d '' certificate <<EOF
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
@@ -127,17 +156,35 @@ spec:
       - $HOST
 EOF
   echo $certificate > /tmp/$DEPLOYMENT-cert.yml
-  kubectl create  
-  # TODO: wait to check it suucceeded? status.conditions[0].status = True, 
-  gcloud compute addresses create $HOST --global
+  kubectl create -f /tmp/$DEPLOYMENT-cert.yml -n $NAMESPACE 
+  echo -n "Waiting for certificate ($HOST) to be issued (this could take 5 minutes)"
+  while : ; do
+    RES=`kubectl get certificate $HOST -n akkeris -o jsonpath='{.status.conditions[0].reason}'`
+    [[ $RES != "CertIssued" ]] || break
+    sleep 1
+    echo -n .
+  done
+  echo
 
+  # TODO: need to add the annotation to the service:
+  #   cloud.google.com/load-balancer-type: "Internal"
+  # TODO: how do we deal with systems/deployments that already have a service created? or load balancer?
+
+  kubectl expose service $DEPLOYMENT --type=LoadBalancer -n $NAMESPACE --name=$DEPLOYMENT-lb
+  
+  
+  export ESCAPED_HOST="$DEPLOYMENT-$NAMESPACE-ingress"
+
+  gcloud compute addresses create $ESCAPED_HOST --global
+
+  # annotations are google cloud only
   read -d '' ingress <<EOF
 apiVersion: extensions/v1beta1
 kind: Ingress
-metadata: 
+metadata:
   annotations:
-      ingress.kubernetes.io/ssl-redirect: "true"
-      kubernetes.io/ingress.global-static-ip-name: $HOST
+      kubernetes.io/ingress.allow-http: "false"
+      kubernetes.io/ingress.global-static-ip-name: "$ESCAPED_HOST"
   name: $DEPLOYMENT
 spec:
   rules:
@@ -145,9 +192,9 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: $DEPLOYMENT
+          serviceName: $DEPLOYMENT-lb
           servicePort: $PORT
-        path: /
+        path: /*
   tls:
   - hosts:
     - $HOST
@@ -156,26 +203,29 @@ EOF
   echo $ingress > /tmp/ingress.yml
   kubectl create -f /tmp/ingress.yml --namespace $NAMESPACE --context $CONTEXT_NAME
 
-  # TODO: create service explicitly for the load balancer?..
-  # TODO: provision the DNS entry in gcloud -- gcloud dns record-sets list --zone public 
-  #       what about the "pubilc" zone ? how do we verify the zone?
-  #
-  #       IP_ADDRESS=`gcloud compute addresses describe $HOST --global | grep 'address: 1.1.1.1'`
-  #       rm -rf /tmp/dns-update.yml
-  #       gcloud dns record-sets transaction start --zone public --transaction-file=/tmp/dns-update.yml
-  #       gcloud dns record-sets transaction add --name $HOST. --type A --ttl 3600 --zone public "$IP_ADDRESS" --transaction-file=/tmp/dns-update.yml
-  #       gcloud dns record-sets transaction execute --zone public --transaction-file=/tmp/dns-update.yml
-  #       rm -rf /tmp/dns-update.yml
-  #
+  echo -n "Waiting for ingress to be created"
+  while : ; do
+    RES=`kubectl get ingress $DEPLOYMENT -n akkeris -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`
+    [[ $RES == "" ]] || break
+    sleep 1
+    echo -n .
+  done
+  echo
+
+  export IP_ADDRESS=`kubectl get ingress $DEPLOYMENT -n akkeris -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`
+  rm -rf /tmp/dns-update.yml
+  gcloud dns record-sets transaction start --zone public --transaction-file=/tmp/dns-update.yml
+  gcloud dns record-sets transaction add --name $HOST. --type A --ttl 3600 --zone public "$IP_ADDRESS" --transaction-file=/tmp/dns-update.yml
+  gcloud dns record-sets transaction execute --zone public --transaction-file=/tmp/dns-update.yml
+  rm -rf /tmp/dns-update.yml
+  # tested EH, OK.
 }
 
 function create_google_kubernetes {
-  # TODO: shouuld we add --enable-cloud-monitoring ?? exising cluster must hve at least two nodes
-  # TODO: we should ensure were 1.10.6 (-gke.2) at least?
+  # TODO: existing should have 1.10.6 (-gke.2) at least? exising cluster must hve at least two nodes
   gcloud container clusters create $CLUSTER_NAME --region $REGION --num-nodes=3 --cluster-version $GCLOUD_CLUSTER_VERSION
   gcloud container clusters get-credentials $CLUSTER_NAME
   kubectl config use-context $CONTEXT_NAME
-  # tested OK 
 }
 
 function install_helm() {
@@ -185,13 +235,28 @@ function install_helm() {
   helm init --service-account tiller --kube-context $CONTEXT_NAME
   kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}' --context $CONTEXT_NAME
   helm init --service-account tiller --upgrade --kube-context $CONTEXT_NAME
-  # tested OK
+}
+
+function sanity_checks() {
+  # check kubectl is installed
+  # check gcloud is installed and is logged in
+  # see if grep exists
+  # see if wc exists
+  # see if tr exists
+  # see if helm exists
+  # see if read exists
+  # see if cat exists
+  # see if cut exists
+  # see if vault exist, and its using v0.10.4+
+  kubectl config use-context $CONTEXT_NAME
+  RBAC=`kubectl api-versions --context $CONTEXT_NAME | grep rbacd | wc -l | tr -d '[:space:]'`
+  if [ "$RBAC" == "0" ]; then
+    echo "The kubernetes cluster $CONTEXT_NAME does not have role based access control (RBAC) enabled/installed.  Enable it and try again."
+    exit 1
+  fi
 }
 
 function install_vault() {
-  # TODO: ensure rbac is enabled with kubectl api-versions | grep rbac, should have 2 values: 
-  #   rbac.authorization.k8s.io/v1
-  #   rbac.authorization.k8s.io/v1beta1
   helm install stable/vault-operator --name vault --namespace akkeris --set etcd-operator.enabled=true --kube-context $CONTEXT_NAME
   read -d '' vaultdep <<EOF
 apiVersion: "vault.security.coreos.com/v1alpha1"
@@ -203,25 +268,51 @@ spec:
   version: "0.9.1-0"
 EOF
   echo $vaultdep > /tmp/vault-cluster.yml
-  # namespace must be the same as the helm install!
+  # namespace must be the same as the helm install stable/vault-operator otherwise it fails.
   kubectl create -f /tmp/vault-cluster.yml --namespace akkeris --context $CONTEXT_NAME
-  # view logs: export POD_NAME=$(kubectl get pods --namespace akkeris -l "app=vault-operator,release=vault" -o jsonpath="{.items[0].metadata.name}")
-  #.           kubectl logs $POD_NAME --namespace=akkeris
+  echo -n "Waiting for vault to be created "
+  while : ; do
+    RES=`kubectl -n akkeris get vault akkeris -o jsonpath='{.status.vaultStatus.sealed[0]}'`
+    [[ $RES == "" ]] || break
+    sleep 1
+    echo -n .
+  done
+  echo "\u2714"
   kubectl -n akkeris get vault akkeris -o jsonpath='{.status.vaultStatus.sealed[0]}' | xargs -0 -I {} kubectl -n akkeris port-forward {} 8200 & 
-  VAULT_ADDR=https://localhost:8200 vault init -tls-skip-verify
-  # TODO: capture above? prompt user about entering keys below?
-  # TODO: How do we test if unseal worked?
-  # TODO: how do we check to make sure vault CLI is installed and v1.10~~
-  VAULT_ADDR=https://localhost:8200 vault unseal -tls-skip-verify
-  VAULT_ADDR=https://localhost:8200 vault unseal -tls-skip-verify
-  VAULT_ADDR=https://localhost:8200 vault unseal -tls-skip-verify
-  # TODO: make sure the outptu does not contain 'Unseal Progress' otherwise the key was entered wrong above somehow
+  
+  echo -n "Initializing Vault..."
+  VAULT_ADDR=https://localhost:8200 vault init -tls-skip-verify > vault-init.log
+  echo "\u2714"
+
+  export VAULT_KEYS=`cat vault.log | grep 'Unseal Key' | cut -d ':' -f 2 | tr -d ' '
+  count=0
+  while read -r line; do
+    count=$((count+1))
+    declare VAULT_KEY_$count=$line
+  done <<< "$VAULT_KEYS"
+
+  export VAULT_ROOT_TOKEN=`cat vault.log | grep 'Initial Root Token:' | cut -d ':' -f 2 | tr -d ' '`
+  
+  echo -n "Unsealing Vault..."
+
+  echo $VAULT_KEY_1 | VAULT_ADDR=https://localhost:8200 vault unseal -tls-skip-verify >> vault.log
+  echo $VAULT_KEY_2 | VAULT_ADDR=https://localhost:8200 vault unseal -tls-skip-verify >> vault.log
+  echo $VAULT_KEY_3| VAULT_ADDR=https://localhost:8200 vault unseal -tls-skip-verify >> vault.log
+
   killall kubectl
 
-  # TODO: ingress? vault.$DOMAIN
-  # TODO: how do we tell it not to use TLS so we can control it on the ingress, or how do we give it a valid cert so it 
-  #       isnt untrusted?
-  # tested OK-ish
+  echo "\u2714"
+  echo
+  echo "*** IMPORTANT: Keep these keys in a safe place (they're also in vault.log) ***"
+  echo " Vault Unseal Key 1: $VAULT_KEY_1"
+  echo " Vault Unseal Key 2: $VAULT_KEY_1"
+  echo " Vault Unseal Key 3: $VAULT_KEY_1"
+  echo " Vault Unseal Key 4: $VAULT_KEY_1"
+  echo " Vault Unseal Key 5: $VAULT_KEY_1"
+  echo
+  echo " Vault Root Key: $VAULT_ROOT_TOKEN"
+  echo
+  # TODO: ingress, get a cert, set the secret value keys, specify custom tls properties in vault creation, create a tcp load balancer on static ip and let valut handle its own tls.
 }
 
 function install_registry() {
@@ -236,6 +327,8 @@ function install_registry() {
 }
 
 function install_jenkins() {
+  # TODO: how do we install plugins?
+  # TODO: how do we set the jenkins url so it sees it in a reverse proxy?
   helm install --name jenkins --namespace akkeris stable/jenkins --set Master.AdminPassword=$JENKINS_PASS --kube-context $CONTEXT_NAME
   # TODO: loop until this doesn't error out
   export JENKINS_IP=$(kubectl get svc --namespace default exhaling-stingray-jenkins --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
@@ -316,4 +409,25 @@ function install_new_gcloud_and_letsencrypt() {
   install_gcloud_akkeris_sites
   install_grafana
 }
+
+
+if [ "REGION" == "" ]; then 
+  echo "The REGION variable must be set to your providers region."
+  exit 1
+fi
+if [ "$EMAIL" == "" ]; then
+  echo "The EMAIL variable must be set to the account on your provider"
+  exit 1
+fi
+
+if [ "$PROVIDER" == "gcloud" ]; then
+  if [ "$PROJECT_ID" == "" ]; then
+    echo "The PROJECT_ID variable must be set to the project on your gcloud, see below:"
+    echo 
+    gcloud projects list
+    exit 1
+  fi
+
+  install_new_gcloud_and_letsencrypt
+fi
 
