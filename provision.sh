@@ -124,15 +124,21 @@ EOF
   # TODO: Install ClusterIssuer not Issuer? (https://cert-manager.readthedocs.io/en/latest/reference/clusterissuers.html)
   echo -n "Installing letsencrypt issuer on gcloud... "
   helm install stable/cert-manager --namespace=akkeris --kube-context $CONTEXT_NAME >> install.log 2>&1
+
+  export ISSUER_URL="https://acme-v02.api.letsencrypt.org/directory"
+  if [ "$TEST_MODE" != "" ]; then
+    export ISSUER_URL="https://acme-staging-v02.api.letsencrypt.org/directory"
+  fi 
+
   read -d '' issuer <<EOF
 apiVersion: certmanager.k8s.io/v1alpha1
-kind: Issuer
+kind: ClusterIssuer
 metadata:
   name: letsencrypt
 spec:
   acme:
     # The ACME server URL
-    server: https://acme-v02.api.letsencrypt.org/directory
+    server: $ISSUER_URL
     # Email address used for ACME registration
     email: "$EMAIL"
     # Name of a secret used to store the ACME account private key
@@ -200,6 +206,7 @@ spec:
   - $HOST
   issuerRef:
     name: $ISSUER
+    kind: ClusterIssuer
   acme:
     config:
     - dns01:
@@ -250,17 +257,16 @@ EOF
 
   message="Waiting for ingress to be created" command="kubectl get ingress $DEPLOYMENT -n akkeris -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --context $CONTEXT_NAME" wait_for_result
 
-  export IP_ADDRESS=`kubectl get ingress $DEPLOYMENT -n akkeris -o jsonpath='{.status.loadBalancer.ingress[0].ip}'  --context $CONTEXT_NAME`
+  export IP_ADDRESS=`kubectl get ingress $DEPLOYMENT -n akkeris -o jsonpath='{.status.loadBalancer.ingress[0].ip}' --context $CONTEXT_NAME`
   rm -rf /tmp/dns-update.yml >> install.log 2>&1
   gcloud dns record-sets transaction start --zone public --transaction-file=/tmp/dns-update.yml >> install.log 2>&1
   gcloud dns record-sets transaction add --name $HOST. --type A --ttl 3600 --zone public "$IP_ADDRESS" --transaction-file=/tmp/dns-update.yml >> install.log 2>&1
   gcloud dns record-sets transaction execute --zone public --transaction-file=/tmp/dns-update.yml >> install.log 2>&1
   rm -rf /tmp/dns-update.yml >> install.log 2>&1
-  # tested EH, OK.
 }
 
 function create_google_kubernetes {
-  echo -n "Installing Kubernetes (this may take 10 minuutes)... "
+  echo -n "Installing Kubernetes (this may take 10 minutes)... "
   gcloud container clusters create $CLUSTER_NAME --region $ZONE --num-nodes=3 --cluster-version $GCLOUD_CLUSTER_VERSION >> install.log 2>&1
   gcloud container clusters get-credentials $CLUSTER_NAME >> install.log 2>&1
   kubectl config use-context $CONTEXT_NAME >> install.log 2>&1
@@ -281,17 +287,57 @@ function install_helm {
 }
 
 function sanity_checks {
-  # check kubectl is installed
-  # check gcloud is installed and is logged in
-  # see if grep exists
-  # see if wc exists
-  # see if tr exists
-  # see if helm exists
-  # see if read exists
-  # see if cat exists
-  # see if cut exists
-  # see if curl exists
-  # see if python exists (v3)
+  if ! [ -x "$(command -v kubectl)" ]; then 
+    echo "kubectl is required to use this"
+    exit 1
+  fi
+  if [ "$PROVIDER" = "gcloud" ]; then
+    if ! [ -x "$(command -v gcloud)" ]; then 
+      echo "gcloud is required to use this"
+      exit 1
+    fi
+    export ACCOUNT=`gcloud auth list --filter=status:ACTIVE --format="value(account)"`
+    if [ "$ACCOUNT" = "" ]; then
+      echo "gcloud must be logged in to use this"
+      exit 1
+    fi
+  fi
+  if ! [ -x "$(command -v curl)" ]; then 
+    echo "curl is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v python3)" ]; then 
+    echo "python3 is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v helm)" ]; then 
+    echo "helm is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v cut)" ]; then 
+    echo "cut is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v cat)" ]; then 
+    echo "cat is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v tr)" ]; then 
+    echo "tr is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v grep)" ]; then 
+    echo "grep is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v wc)" ]; then 
+    echo "wc is required to use this"
+    exit 1
+  fi
+  if ! [ -x "$(command -v tr)" ]; then 
+    echo "tr is required to use this"
+    exit 1
+  fi
   # TODO: existing cluster use should have 1.10.6 (-gke.2) at least? 
   kubectl config use-context $CONTEXT_NAME  >> install.log 2>&1
   RBAC=`kubectl api-versions --context $CONTEXT_NAME | grep rbacd | wc -l | tr -d '[:space:]'`
@@ -342,9 +388,7 @@ EOF
   curl -k -s https://localhost:8200/v1/sys/unseal -X PUT -d "{\"key\":\"$VAULT_KEY_2\"}" -H 'Accept: application/json' -H 'Content-Type: application/json' >> install.log 2>&1
   curl -k -s https://localhost:8200/v1/sys/unseal -X PUT -d "{\"key\":\"$VAULT_KEY_3\"}" -H 'Accept: application/json' -H 'Content-Type: application/json' >> install.log 2>&1
 
-
-  # TODO: update configmap so that it disables TLS as we'll be using an ingress with https.
-  #  kubectl patch configmaps vault-copy -n akkeris -p '{"data":{"vault.hcl":"\\ntelemetry {\\n\\tstatsd_address = \\"localhost:9125\\"\\n}\\n\\nlistener \\"tcp\\" {\\n  address     = \\"0.0.0.0:8200\\"\\n  cluster_address = \\"0.0.0.0:8201\\"\\n  tls_disable = 1\\n}\\n\\nstorage \\"etcd\\" {\\n  address = \\"https://vault-etcd-client:2379\\"\\n  etcd_api = \\"v3\\"\\n  ha_enabled = \\"true\\"\\n  tls_ca_file = \\"/run/vault/tls/etcd-client-ca.crt\\"\\n  tls_cert_file = \\"/run/vault/tls/etcd-client.crt\\"\\n  tls_key_file = \\"/run/vault/tls/etcd-client.key\\"\\n  sync = \\"false\\"\\n}\\n"}}' > /tmp/vault.hcl
+  killall kubectl >> install.log 2>&1
 
   echo "✔"
   echo
@@ -358,11 +402,8 @@ EOF
   echo 
   echo " All of this and the recovery keys were written to vault.json, you can just save this file."
   echo
-
-  killall kubectl >> install.log 2>&1
-
-  # Cluster Url: http://vault.akkeris:8200 
-  # External Url: https://vault.$DOMAIN
+  # TODO: setup external ingress
+  # Cluster Url: http://vault.akkeris:8200 External Url: https://vault.$DOMAIN
 }
 
 function install_registry {
@@ -380,16 +421,14 @@ function install_jenkins {
   # TODO: how do we install plugins (dsl pipeline docker, etc)?
   # TODO: how do we set the jenkins url so it sees it in a reverse proxy?
   # TODO: loop until its up, setup standard tls ingress
-  # Cluster Url: http://jenkins.akkeris:8080
-  # External Url: https://builds.$CLUSTER.$DOMAIN
+  # Cluster Url: http://jenkins.akkeris:8080  External Url: https://builds.$CLUSTER.$DOMAIN
 }
 
 function install_influxdb {
   echo -n "Installing InfluxDb "
   helm install --name metrics --namespace akkeris stable/influxdb --kube-context $CONTEXT_NAME >> install.log 2>&1
   echo "✔"
-  # Cluster Url http://metrics-influxdb.akkeris:8086
-  # External Url https://metrics.$CLUSTER.$DOMAIN
+  # Cluster Url http://metrics-influxdb.akkeris:8086  External Url https://metrics.$CLUSTER.$DOMAIN
   # TODO: create a database within influx for app metrics?x
 }
 
@@ -432,8 +471,8 @@ function install_grafana {
 
 function install_gcloud_akkeris_sites {
   DEPLOYMENT=jenkins NAMESPACE=akkeris PORT=8080 HOST=builds.$DOMAIN ISSUER=letsencrypt create_gcloud_ssl_site
-  # DEPLOYMENT=registry-docker-registry NAMESPACE=akkeris PORT=5000 HOST=registry.$DOMAIN ISSUER=letsencrypt create_gcloud_ssl_site
   # DEPLOYMENT=vault NAMESPACE=akkeris PORT=5000 HOST=vault.$DOMAIN ISSUER=letsencrypt create_gcloud_ssl_site
+  # DEPLOYMENT=registry-docker-registry NAMESPACE=akkeris PORT=5000 HOST=registry.$DOMAIN ISSUER=letsencrypt create_gcloud_ssl_site
   # DEPLOYMENT=auth NAMESPACE=akkeris PORT=???? HOST=auth.$DOMAIN create_gcloud_ssl_site
   # DEPLOYMENT=appsapi NAMESPACE=akkeris PORT=???? HOST=apps.$DOMAIN create_gcloud_ssl_site
   # DEPLOYMENT=akkerisui NAMESPACE=akkeris PORT=???? HOST=akkeris.$DOMAIN create_gcloud_ssl_site
@@ -443,7 +482,7 @@ function install_new_gcloud_and_letsencrypt {
   gcloud config set project $PROJECT_ID  >> install.log 2>&1
   gcloud config set compute/zone $ZONE >> install.log 2>&1
   create_google_kubernetes
-  kubectl create namespace akkeris --context $CONTEXT_NAME  >> install.log 2>&1
+  kubectl create namespace akkeris --context $CONTEXT_NAME >> install.log 2>&1
   install_helm
   install_gcloud_letsencrypt_issuer
   install_gcloud_vault
