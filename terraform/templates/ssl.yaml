@@ -1,0 +1,18 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: ${HOST}
+spec:
+  secretName: ${DEPLOYMENT}-tls
+  commonName: ${HOST}
+  dnsNames:
+  - ${HOST}
+  issuerRef:
+    name: ${ISSUER}
+    kind: ClusterIssuer
+  acme:
+    config:
+    - dns01:
+        provider: gcloud
+      domains:
+      - ${HOST}

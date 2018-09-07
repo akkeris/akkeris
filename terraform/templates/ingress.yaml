@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+      kubernetes.io/ingress.allow-http: "false"
+      kubernetes.io/ingress.global-static-ip-name: "${ESCAPED_HOST}"
+  name: ${DEPLOYMENT}
+spec:
+  rules:
+  - host: ${HOST}
+    http:
+      paths:
+      - backend:
+          serviceName: ${DEPLOYMENT}-lb
+          servicePort: ${PORT}
+        path: /*
+  tls:
+  - hosts:
+    - ${HOST}
+    secretName: ${DEPLOYMENT}-tls
