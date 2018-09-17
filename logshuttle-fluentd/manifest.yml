@@ -1,0 +1,103 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: logshuttle-fluentd
+  namespace: kube-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: logshuttle-fluentd
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: logshuttle-fluentd
+roleRef:
+  kind: ClusterRole
+  name: logshuttle-fluentd
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: logshuttle-fluentd
+  namespace: kube-system
+---
+kind: DaemonSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: logshuttle-fluentd
+  namespace: kube-system
+  labels:
+    k8s-app: logshuttle-fluentd
+    kubernetes.io/cluster-service: "true"
+spec:
+  selector:
+    matchLabels:
+      k8s-app: fluentd-shard
+  template:
+    metadata:
+      creationTimestamp: 
+      labels:
+        k8s-app: fluentd-shard
+    spec:
+      volumes:
+      - name: varlog
+        hostPath:
+          path: "/var/log"
+      - name: docker-containers
+        hostPath:
+          path: "/var/lib/docker/containers"
+      - name: ssl-certs
+        hostPath:
+          path: "/usr/share/ca-certificates"
+      containers:
+      - name: fluentd
+        image: akkeris/logshuttle-fluentd:release-13
+        env:
+        - name: FLUENTD_ARGS
+          value: ""
+        resources:
+          limits:
+            memory: 1000Mi
+          requests:
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: "/var/log"
+        - name: docker-containers
+          mountPath: "/var/lib/docker/containers"
+        - name: ssl-certs
+          mountPath: "/etc/ssl/certs"
+        terminationMessagePath: "/dev/termination-log"
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+      serviceAccount: logshuttle-fluentd
+      serviceAccountName: logshuttle-fluentd
+      tolerations:
+      - key: role
+        operator: Equal
+        value: master
+        effect: NoSchedule
+  updateStrategy:
+    type: OnDelete
+  templateGeneration: 1
+  revisionHistoryLimit: 10

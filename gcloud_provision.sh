@@ -35,7 +35,6 @@ if [ "$EMAIL" = "" ]; then
   exit 1
 fi
 if [ "$JENKINS_PASS" = "" ]; then
-  LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 8
   export JENKINS_PASS=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 15)
 fi
 if [ "$PROVIDER" = "gcloud" ]; then
@@ -392,7 +391,7 @@ EOF
 
   echo "✔"
   echo
-  echo "*** IMPORTANT: Keep these keys in a safe place (they're also in vault.log) ***"
+  echo "*** IMPORTANT: Keep these keys in a safe place (they're also in vault.json) ***"
   echo
   echo " Vault Unseal Key 1: $VAULT_KEY_1"
   echo " Vault Unseal Key 2: $VAULT_KEY_2"
@@ -435,10 +434,18 @@ function install_influxdb {
 function install_kafka {
   echo -n "Installing Kafka "
   helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator >> install.log
-  helm install --name kafkalogs --namespace akkeris incubator/kafka --kube-context $CONTEXT_NAME >> install.log 2>&1
+  helm install --name kafkalogs --namespace kube-system incubator/kafka -f ./kafka-helm-config.yml --kube-context $CONTEXT_NAME >> install.log 2>&1
   echo "✔"
   # Cluster Hosts: kafkalogs-zookeeper.akkeris:2181 kafkalogs-kafka.akkeris:9092
-  # TODO: fluentd setup to push logs?
+  # TODO: not... really working....
+}
+
+function install_fluentd {
+  sleep 15
+  echo -n "Installing Logshuttle Fluentd "
+  kubectl create -f ./logshuttle-fluentd/manifest.yml --context $CONTEXT_NAME >> install.log 2>&1 
+  echo "✔"
+  # TODO: not... really working.... probably because kafka isnt really working, well zookeeper rather.
 }
 
 function install_gcloud_akkeris_deployments {
@@ -448,8 +455,8 @@ function install_gcloud_akkeris_deployments {
   echo -n "Installing Akkeris "
   # TODO: region-api
   # TODO: apps-watcher
-  # TODO: logshuttle  -> needs postgres, thus postgres broker akkeris/logshuttle:release-4
-  # TODO: logsession  -> needs postgres, thus postgres broker akkeris/logshuttle:release-4
+  # TODO: logshuttle  -> needs postgres, thus postgres broker akkeris/logshuttle:latest, POSTGRES_URL=... PORT=5000, KAFKA_HOSTS=kafkalogs-0.akkeris,kafkalogs-1.akkeris,kafkalogs-2.akkeris, SYSLOG=...?, AUTH_KEY=...
+  # TODO: logsession  -> needs postgres, thus postgres broker akkeris/logshuttle:latest, POSTGRES_URL=... PORT=5000, KAFKA_HOSTS=kafkalogs-0.akkeris,kafkalogs-1.akkeris,kafkalogs-2.akkeris, SYSLOG=...?, RUN_SESSION=1 SESSION_URL=https:// ingress?, AUTH_KEY=...
   # TODO: auth
   # TODO: controller
   # TODO: appkit (appsapi)
@@ -482,6 +489,14 @@ function install_new_gcloud_and_letsencrypt {
   gcloud config set project $PROJECT_ID  >> install.log 2>&1
   gcloud config set compute/zone $ZONE >> install.log 2>&1
   create_google_kubernetes
+
+  # TODO: Capitalize first.last if exists, in email to overcome gcloud.. buug
+  #  See: https://coreos.com/operators/prometheus/docs/latest/troubleshooting.html
+  export CAPITALIZED=`echo $EMAIL | sed -e 's/@.*//g' | sed 's/\./ /g' | sed -e "s/\b./\u\0/g" | python3 -c "import sys; print(sys.stdin.read().title())" | sed 's/ /\./g'`
+  export ADDRESS=`echo $EMAIL | sed 's/.*@//g'`
+  kubectl create clusterrolebinding myname-cluster-admin-binding-cased --clusterrole=cluster-admin --user="$CAPITALIZED@$ADDRESS" --context $CONTEXT_NAME >> install.log 2>&1
+  kubectl create clusterrolebinding myname-cluster-admin-binding-norm --clusterrole=cluster-admin --user="$EMAIL" --context $CONTEXT_NAME >> install.log 2>&1
+
   kubectl create namespace akkeris --context $CONTEXT_NAME >> install.log 2>&1
   install_helm
   install_gcloud_letsencrypt_issuer
@@ -490,6 +505,7 @@ function install_new_gcloud_and_letsencrypt {
   install_jenkins
   install_influxdb
   install_kafka
+  install_fluentd
   install_gcloud_akkeris_deployments
   install_gcloud_akkeris_sites
   install_grafana

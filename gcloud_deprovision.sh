@@ -23,7 +23,6 @@ if [ "$EMAIL" = "" ]; then
   exit 1
 fi
 if [ "$JENKINS_PASS" = "" ]; then
-  LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 8
   export JENKINS_PASS=$(LC_CTYPE=C tr -d -c '[:alnum:]' </dev/urandom | head -c 15)
 fi
 if [ "$PROVIDER" = "gcloud" ]; then
@@ -75,6 +74,10 @@ function uninstall_vault {
 
 function uninstall_jenkins {
   helm del --purge jenkins --kube-context $CONTEXT_NAME
+}
+
+function uninstall_fluentd {
+  kubectl delete -f ./logshuttle-fluentd/manifest.yml --context $CONTEXT_NAME
 }
 
 function uuninstall_influxdb {
