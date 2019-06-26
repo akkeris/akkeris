@@ -1,0 +1,30 @@
+{{- if .Values.logsession.ingress.enabled -}}
+{{- $serviceName := include "akkeris.logsession.fullname" . }}
+{{- $servicePort := .Values.logsession.service.servicePort -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+{{- if .Values.logsession.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.logsession.ingress.annotations | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.logsession.fullname" . }}
+  labels:
+{{ include "akkeris.labels" . | indent 4 }}
+spec:
+rules:
+  {{- range .Values.logsession.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.logsession.ingress.tls }}
+  tls:
+{{ toYaml .Values.logsession.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}

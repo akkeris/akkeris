@@ -20,7 +20,12 @@ $ helm install ./helm/akkeris
 
 Parameter | Description | Default
 --------- | ----------- | -------
-`postgres_broker.enabled` | If true, create postgres broker | `true`
+`regionApi.name` | region-api container name | `region-api`
+`regionApi.image.repository` | region-api container image repository | `akkeris/region-api`
+`regionApi.image.tag` | region-api container image tag | `release-38`
+`regionApi.image.pullPolicy` | region-api container image pull policy | `IfNotPresent`
+`regoinApi.ingress.enables` | If true, region-api Ingress will be created | `false`
+`databaseBroker.enabled` | If true, create postgres broker | `true`
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

@@ -1,16 +1,36 @@
+{{- if .Values.databaseBroker.enabled -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+{{- if .Values.databaseBroker.service.annotations }}
+  annotations:
+{{ toYaml .Values.databaseBroker.service.annotations | indent 4 }}
+{{- end }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+    {{- include "akkeris.databaseBroker.labels" . | nindent 4 }}
+{{- if .Values.databaseBroker.service.labels }}
+{{ toYaml .Values.databaseBroker.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.databaseBroker.fullname" . }}
+
 spec:
-  type: {{ .Values.service.type }}
+{{- if .Values.databaseBroker.service.clusterIP }}
+  clusterIP: {{ .Values.databaseBroker.service.clusterIP }}
+{{- end }}
+{{- if .Values.databaseBroker.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.databaseBroker.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.databaseBroker.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.databaseBroker.service.servicePort }}
+      targetPort: 3600
       protocol: TCP
       name: http
+    {{- if .Values.databaseBroker.service.nodePort }}
+      nodePort: {{ .Values.databaseBroker.service.nodePort }}
+    {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "akkeris.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "akkeris.databaseBroker.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.databaseBroker.service.type }}"
+{{- end }}

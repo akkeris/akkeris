@@ -1,16 +1,39 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+{{- if .Values.buildshuttle.service.annotations }}
+  annotations:
+{{ toYaml .Values.buildshuttle.service.annotations | indent 4 }}
+{{- end }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+    {{- include "akkeris.buildshuttle.labels" . | nindent 4 }}
+{{- if .Values.buildshuttle.service.labels }}
+{{ toYaml .Values.buildshuttle.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.buildshuttle.fullname" . }}
+
 spec:
-  type: {{ .Values.service.type }}
+{{- if .Values.buildshuttle.service.clusterIP }}
+  clusterIP: {{ .Values.buildshuttle.service.clusterIP }}
+{{- end }}
+{{- if .Values.buildshuttle.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.buildshuttle.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.buildshuttle.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.buildshuttle.service.servicePort }}
+      targetPort: 9000
       protocol: TCP
       name: http
+    {{- if .Values.buildshuttle.service.nodePort }}
+      nodePort: {{ .Values.buildshuttle.service.nodePort }}
+    {{- end }}
+    - port: 2375
+      name: docker
+      protocol: TCP
+      targetPort: 2375
   selector:
-    app.kubernetes.io/name: {{ include "akkeris.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "akkeris.buildshuttle.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.buildshuttle.service.type }}"
+{{- end }}

@@ -1,16 +1,35 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+{{- if .Values.regionApi.service.annotations }}
+  annotations:
+{{ toYaml .Values.regionApi.service.annotations | indent 4 }}
+{{- end }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+    {{- include "akkeris.regionApi.labels" . | nindent 4 }}
+{{- if .Values.regionApi.service.labels }}
+{{ toYaml .Values.regionApi.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.regionApi.fullname" . }}
+
 spec:
-  type: {{ .Values.service.type }}
+{{- if .Values.regionApi.service.clusterIP }}
+  clusterIP: {{ .Values.regionApi.service.clusterIP }}
+{{- end }}
+{{- if .Values.regionApi.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.regionApi.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.regionApi.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.regionApi.service.servicePort }}
+      targetPort: 3600
       protocol: TCP
       name: http
+    {{- if .Values.regionApi.service.nodePort }}
+      nodePort: {{ .Values.regionApi.service.nodePort }}
+    {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "akkeris.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "akkeris.regionApi.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.regionApi.service.type }}"
+{{- end }}

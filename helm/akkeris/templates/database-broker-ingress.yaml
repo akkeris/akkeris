@@ -1,0 +1,30 @@
+{{- if and .Values.databaseBroker.enabled .Values.databaseBroker.ingress.enabled -}}
+{{- $serviceName := include "akkeris.databaseBroker.fullname" . }}
+{{- $servicePort := .Values.databaseBroker.service.servicePort -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+{{- if .Values.databaseBroker.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.databaseBroker.ingress.annotations | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.databaseBroker.fullname" . }}
+  labels:
+{{ include "akkeris.labels" . | indent 4 }}
+spec:
+rules:
+  {{- range .Values.databaseBroker.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.databaseBroker.ingress.tls }}
+  tls:
+{{ toYaml .Values.databaseBroker.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}

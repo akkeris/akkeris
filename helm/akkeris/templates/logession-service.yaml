@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.logsession.service.annotations }}
+  annotations:
+{{ toYaml .Values.logsession.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "akkeris.logsession.labels" . | nindent 4 }}
+{{- if .Values.logsession.service.labels }}
+{{ toYaml .Values.logsession.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.logsession.fullname" . }}
+
+spec:
+{{- if .Values.logsession.service.clusterIP }}
+  clusterIP: {{ .Values.logsession.service.clusterIP }}
+{{- end }}
+{{- if .Values.logsession.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.logsession.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.logsession.service.type }}
+  ports:
+    - port: {{ .Values.logsession.service.servicePort }}
+      targetPort: 3600
+      protocol: TCP
+      name: http
+    {{- if .Values.logsession.service.nodePort }}
+      nodePort: {{ .Values.logsession.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "akkeris.logsession.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.logsession.service.type }}"
+{{- end }}

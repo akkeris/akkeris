@@ -1,16 +1,35 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+{{- if .Values.logshuttle.service.annotations }}
+  annotations:
+{{ toYaml .Values.logshuttle.service.annotations | indent 4 }}
+{{- end }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+    {{- include "akkeris.logshuttle.labels" . | nindent 4 }}
+{{- if .Values.logshuttle.service.labels }}
+{{ toYaml .Values.logshuttle.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.logshuttle.fullname" . }}
+
 spec:
-  type: {{ .Values.service.type }}
+{{- if .Values.logshuttle.service.clusterIP }}
+  clusterIP: {{ .Values.logshuttle.service.clusterIP }}
+{{- end }}
+{{- if .Values.logshuttle.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.logshuttle.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.logshuttle.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.logshuttle.service.servicePort }}
+      targetPort: 5000
       protocol: TCP
       name: http
+    {{- if .Values.logshuttle.service.nodePort }}
+      nodePort: {{ .Values.logshuttle.service.nodePort }}
+    {{- end }}
   selector:
-    app.kubernetes.io/name: {{ include "akkeris.name" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "akkeris.logshuttle.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.logshuttle.service.type }}"
+{{- end }}

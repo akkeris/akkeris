@@ -1,52 +1,71 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+  name: {{ include "akkeris.regionApi.fullname" . }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+{{ include "akkeris.regionApi.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.regionApi.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "akkeris.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- include "akkeris.regionApi.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.server.strategy | indent 4 }}
+  {{- end }}
   template:
     metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "akkeris.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-    spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+    {{- if .Values.regionApi.podAnnotations }}
+      annotations:
+{{ toYaml .Values.regionApi.podAnnotations | indent 8 }}
     {{- end }}
+      labels:
+        {{- include "akkeris.regionApi.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.regionApi.schedulerName }}
+      schedulerName: "{{ .Values.regionApi.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.regionApi.priorityClassName }}
+      priorityClassName: "{{ .Values.regionApi.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.regionApi.name }}
+          image: "{{ .Values.regionApi.image.repository }}:{{ .Values.regionApi.image.tag }}"
+          imagePullPolicy: {{ .Values.regionApi.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .akkeris.regionApi.name }}
+        {{- range .Values.regionApi.secrets }}
+        - secretRef:
+          name: {{ . }}
+        {{- end }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 3600
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.regionApi.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml .Values.regionApi.nodeSelector | indent 8 }}
     {{- end }}
-    {{- with .Values.tolerations }}
+    {{- if .Values.regionApi.securityContext }}
+      securityContext:
+{{ toYaml .Values.regionApi.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.regionApi.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml .Values.regionApi.tolerations | indent 8 }}
     {{- end }}
+    {{- if .Values.regionApi.affinity }}
+      affinity:
+{{ toYaml .Values.regionApi.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

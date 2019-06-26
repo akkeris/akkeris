@@ -1,52 +1,91 @@
+{{- if .Values.databaseBroker.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+  name: {{ include "akkeris.databaseBroker.fullname" . }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+{{ include "akkeris.databaseBroker.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.databaseBroker.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "akkeris.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- include "akkeris.databaseBroker.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.server.strategy | indent 4 }}
+  {{- end }}
   template:
     metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "akkeris.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-    spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+    {{- if .Values.databaseBroker.podAnnotations }}
+      annotations:
+{{ toYaml .Values.databaseBroker.podAnnotations | indent 8 }}
     {{- end }}
+      labels:
+        {{- include "akkeris.databaseBroker.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.databaseBroker.schedulerName }}
+      schedulerName: "{{ .Values.databaseBroker.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.databaseBroker.priorityClassName }}
+      priorityClassName: "{{ .Values.databaseBroker.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.databaseBroker.name }}
+          image: "{{ .Values.databaseBroker.image.repository }}:{{ .Values.databaseBroker.image.tag }}"
+          imagePullPolicy: {{ .Values.databaseBroker.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .akkeris.databaseBroker.name }}
+          {{- range .Values.databaseBroker.secrets }}
+          - secretRef:
+              name: {{ . }}
+          {{- end }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8443
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.databaseBroker.name }}-{{ .Values.databaseBroker.worker.name }}
+          image: "{{ .Values.databaseBroker.repository }}:{{ .Values.databaseBroker.tag }}"
+          imagePullPolicy: "{{ .Values.databaseBroker.pullPolicy }}"
+          envFrom:
+          - configMapRef:
+              name: {{ .akkeris.databaseBroker.name }}
+          {{- range .Values.databaseBroker.secrets }}
+          - secretRef:
+              name: {{ . }}
+          {{- end }}
+          command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+            - -background-tasks
+          resources:
+{{ toYaml .Values.configmapReload.resources | indent 12 }}
+          
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.databaseBroker.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml .Values.databaseBroker.nodeSelector | indent 8 }}
     {{- end }}
-    {{- with .Values.tolerations }}
+    {{- if .Values.databaseBroker.securityContext }}
+      securityContext:
+{{ toYaml .Values.databaseBroker.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.databaseBroker.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml .Values.databaseBroker.tolerations | indent 8 }}
     {{- end }}
+    {{- if .Values.databaseBroker.affinity }}
+      affinity:
+{{ toYaml .Values.databaseBroker.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+

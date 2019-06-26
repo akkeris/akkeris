@@ -15,148 +15,52 @@ controller:
     tag: stable
     pullPolicy: IfNotPresent
 
----
- ## Prometheus server container name
+regionApi:
+  ## region-api container name
   ##
-  name: server
-  sidecarContainers:
+  name: region-api
 
-  ## Prometheus server container image
+  ## region-api container image
   ##
   image:
-    repository: prom/prometheus
-    tag: v2.9.2
+    repository: akkeris/region-api
+    tag: release-38
     pullPolicy: IfNotPresent
 
-  ## prometheus server priorityClassName
+  ## region-api priorityClassName
   ##
   priorityClassName: ""
-
-  ## The URL prefix at which the container can be accessed. Useful in the case the '-web.external-url' includes a slug
-  ## so that the various internal URLs are still able to access as they are in the default case.
-  ## (Optional)
-  prefixURL: ""
-
-  ## External URL which can access alertmanager
-  ## Maybe same with Ingress host name
-  baseURL: ""
-
-  ## Additional server container environment variables
-  ##
-  ## You specify this manually like you would a raw deployment manifest.
-  ## This means you can bind in environment variables from secrets.
-  ##
-  ## e.g. static environment variable:
-  ##  - name: DEMO_GREETING
-  ##    value: "Hello from the environment"
-  ##
-  ## e.g. secret environment variable:
-  ## - name: USERNAME
-  ##   valueFrom:
-  ##     secretKeyRef:
-  ##       name: mysecret
-  ##       key: username
-  env: {}
-
-  ## This flag controls access to the administrative HTTP API which includes functionality such as deleting time
-  ## series. This is disabled by default.
-  enableAdminApi: false
-
-  ## This flag controls BD locking
-  skipTSDBLock: false
-
-  ## Path to a configuration file on prometheus server container FS
-  configPath: /etc/config/prometheus.yml
-
-  global:
-    ## How frequently to scrape targets by default
-    ##
-    scrape_interval: 1m
-    ## How long until a scrape request times out
-    ##
-    scrape_timeout: 10s
-    ## How frequently to evaluate rules
-    ##
-    evaluation_interval: 1m
-
-  ## Additional Prometheus server container arguments
-  ##
-  extraArgs: {}
-
-  ## Additional Prometheus server Volume mounts
-  ##
-  extraVolumeMounts: []
-
-  ## Additional Prometheus server Volumes
-  ##
-  extraVolumes: []
-
-  ## Additional Prometheus server hostPath mounts
-  ##
-  extraHostPathMounts: []
-    # - name: certs-dir
-    #   mountPath: /etc/kubernetes/certs
-    #   subPath: ""
-    #   hostPath: /etc/kubernetes/certs
-    #   readOnly: true
-
-  extraConfigmapMounts: []
-    # - name: certs-configmap
-    #   mountPath: /prometheus
-    #   subPath: ""
-    #   configMap: certs-configmap
-    #   readOnly: true
-
-  ## Additional Prometheus server Secret mounts
-  # Defines additional mounts with secrets. Secrets must be manually created in the namespace.
-  extraSecretMounts: []
-    # - name: secret-files
-    #   mountPath: /etc/secrets
-    #   subPath: ""
-    #   secretName: prom-secret-files
-    #   readOnly: true
-
-  ## ConfigMap override where fullname is {{.Release.Name}}-{{.Values.server.configMapOverrideName}}
-  ## Defining configMapOverrideName will cause templates/server-configmap.yaml
-  ## to NOT generate a ConfigMap resource
-  ##
-  configMapOverrideName: ""
-
+  
   ingress:
-    ## If true, Prometheus server Ingress will be created
+    ## If true, region-api Ingress will be created
     ##
     enabled: false
 
-    ## Prometheus server Ingress annotations
+    ## region-api Ingress annotations
     ##
     annotations: {}
     #   kubernetes.io/ingress.class: nginx
     #   kubernetes.io/tls-acme: 'true'
 
-    ## Prometheus server Ingress additional labels
-    ##
-    extraLabels: {}
-
-    ## Prometheus server Ingress hostnames with optional path
+    ## region-api Ingress hostnames with optional path
     ## Must be provided if Ingress is enabled
     ##
     hosts: []
-    #   - prometheus.domain.com
-    #   - domain.com/prometheus
+    #  - region-api.domain.com
 
-    ## Prometheus server Ingress TLS configuration
-    ## Secrets must be manually created in the namespace
-    ##
     tls: []
-    #   - secretName: prometheus-server-tls
-    #     hosts:
-    #       - prometheus.domain.com
+    #  - secretName: region-api-tls
+    #    hosts:
+    #      - region-api.domain.com
 
-  ## Server Deployment Strategy type
-  # strategy:
-  #   type: Recreate
+  ## region-api Deployment Strategy type
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+      type: RollingUpdate
 
-  ## Node tolerations for server scheduling to nodes with taints
+  ## Node tolerations for region-api scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   ##
   tolerations: []
@@ -165,7 +69,7 @@ controller:
     #   value: "value"
     #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
-  ## Node labels for Prometheus server pod assignment
+  ## Node labels for region-api pod assignment
   ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
@@ -179,90 +83,24 @@ controller:
   ##
   # schedulerName:
 
-  persistentVolume:
-    ## If true, Prometheus server will create/use a Persistent Volume Claim
-    ## If false, use emptyDir
-    ##
-    enabled: true
-
-    ## Prometheus server data Persistent Volume access modes
-    ## Must match those of existing PV or dynamic provisioner
-    ## Ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-    ##
-    accessModes:
-      - ReadWriteOnce
-
-    ## Prometheus server data Persistent Volume annotations
-    ##
-    annotations: {}
-
-    ## Prometheus server data Persistent Volume existing claim name
-    ## Requires server.persistentVolume.enabled: true
-    ## If defined, PVC must be created manually before volume will be bound
-    existingClaim: ""
-
-    ## Prometheus server data Persistent Volume mount root path
-    ##
-    mountPath: /data
-
-    ## Prometheus server data Persistent Volume size
-    ##
-    size: 8Gi
-
-    ## Prometheus server data Persistent Volume Storage Class
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    # storageClass: "-"
-
-    ## Subdirectory of Prometheus server data Persistent Volume to mount
-    ## Useful if the volume's root directory is not empty
-    ##
-    subPath: ""
-
-  emptyDir:
-    sizeLimit: ""
-
-  ## Annotations to be added to Prometheus server pods
+  ## Annotations to be added to region-api pods
   ##
   podAnnotations: {}
-    # iam.amazonaws.com/role: prometheus
-
-  ## Use a StatefulSet if replicaCount needs to be greater than 1 (see below)
-  ##
+  
   replicaCount: 1
 
-  statefulSet:
-    ## If true, use a statefulset instead of a deployment for pod management.
-    ## This allows to scale replicas to more than 1 pod
-    ##
-    enabled: false
-
-    annotations: {}
-    podManagementPolicy: OrderedReady
-
-    ## Alertmanager headless service to use for the statefulset
-    ##
-    headless:
-      annotations: {}
-      labels: {}
-      servicePort: 80
-
-  ## Prometheus server resource requests and limits
+  ## region-api resource requests and limits
   ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
   resources: {}
     # limits:
-    #   cpu: 500m
-    #   memory: 512Mi
+    #   cpu: 10m
+    #   memory: 32Mi
     # requests:
-    #   cpu: 500m
-    #   memory: 512Mi
+    #   cpu: 10m
+    #   memory: 32Mi
 
-  ## Security context to be added to server pods
+  ## Security context to be added to region-api pods
   ##
   securityContext: {}
 
@@ -271,61 +109,446 @@ controller:
     labels: {}
     clusterIP: ""
 
-    ## List of IP addresses at which the Prometheus server service is available
+    ## List of IP addresses at which the region-api service is available
     ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
     ##
     externalIPs: []
 
-    loadBalancerIP: ""
-    loadBalancerSourceRanges: []
     servicePort: 80
-    type: ClusterIP
+    # nodePort: 30000
+    type: nodePort
 
-  ## Prometheus server pod termination grace period
+logsession:
+  ## logsession container name
   ##
-  terminationGracePeriodSeconds: 300
+  name: logsession
 
-  ## Prometheus data retention period (i.e 360h)
+  ## logsession container image
   ##
-  retention: ""
----
+  image:
+    repository: akkeris/logsession
+    tag: release-38
+    pullPolicy: IfNotPresent
 
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+  ## logsession priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, logsession Ingress will be created
+    ##
+    enabled: false
 
-service:
-  type: ClusterIP
-  port: 80
+    ## logsession Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
 
-ingress:
-  enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths: []
+    ## logsession Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - logsession.domain.com
 
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+    tls: []
+    #  - secretName: logsession-tls
+    #    hosts:
+    #      - logsession.domain.com
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  ## logsession Deployment Strategy type
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+      type: RollingUpdate
 
-nodeSelector: {}
+  ## Node tolerations for logsession scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
-tolerations: []
+  ## Node labels for logsession pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
 
-affinity: {}
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to logsession pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## logsession resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to logsession pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the logsession service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+buildshuttle:
+  ## buildshuttle container name
+  ##
+  name: buildshuttle
+
+  ## buildshuttle container image
+  ##
+  image:
+    repository: akkeris/buildshuttle
+    tag: release-72
+    pullPolicy: IfNotPresent
+
+  ## Additional alertmanager container environment variable
+  ## For instance to add a http_proxy
+  ##
+  extraEnv: 
+    - DEBUG: buildshuttle,buildshuttle-worker
+    - PORT: 9000
+    - MAXIMUM_PARALLEL_BUILDS: 4
+    - DOCKER_BUILD_SETTINGS: {}
+
+  ## buildshuttle priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, buildshuttle Ingress will be created
+    ##
+    enabled: false
+
+    ## buildshuttle Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## buildshuttle Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - buildshuttle.domain.com
+
+    tls: []
+    #  - secretName: buildshuttle-tls
+    #    hosts:
+    #      - buildshuttle.domain.com
+
+  ## buildshuttle Deployment Strategy type
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+      type: RollingUpdate
+
+  ## Node tolerations for buildshuttle scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for buildshuttle pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+          - key: akkeris.io/node-role
+            operator: In
+            values:
+            - build
+        weight: 1
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to buildshuttle pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## buildshuttle resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to buildshuttle pods
+  ##
+  securityContext:
+    capabilities: {}
+    privileged: true
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the buildshuttle service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+databaseBroker:
+  ## database-broker container name
+  ##
+  name: database-broker
+
+  ## database-broker container image
+  ##
+  image:
+    repository: akkeris/database-broker
+    tag: release-38
+    pullPolicy: IfNotPresent
+  
+  worker:
+    name: database-broker-worker
+
+  ## database-broker priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, database-broker Ingress will be created
+    ##
+    enabled: false
+
+    ## database-broker Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## database-broker Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - database-broker.domain.com
+
+    tls: []
+    #  - secretName: database-broker-tls
+    #    hosts:
+    #      - database-broker.domain.com
+
+  ## database-broker Deployment Strategy type
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+      type: RollingUpdate
+
+  ## Node tolerations for database-broker scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for database-broker pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to database-broker pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## database-broker resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to database-broker pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the database-broker service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+  logshuttle:
+  ## logshuttle container name
+  ##
+  name: logshuttle
+
+  ## logshuttle container image
+  ##
+  image:
+    repository: akkeris/logshuttle
+    tag: release-9
+    pullPolicy: IfNotPresent
+
+  ## logshuttle priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, logshuttle Ingress will be created
+    ##
+    enabled: false
+
+    ## logshuttle Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## logshuttle Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - logshuttle.domain.com
+
+    tls: []
+    #  - secretName: logshuttle-tls
+    #    hosts:
+    #      - logshuttle.domain.com
+
+  ## logshuttle Deployment Strategy type
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 1
+      type: RollingUpdate
+
+  ## Node tolerations for logshuttle scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for logshuttle pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to logshuttle pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## logshuttle resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to logshuttle pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the logshuttle service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort

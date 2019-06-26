@@ -1,0 +1,30 @@
+{{- if .Values.regionApi.ingress.enabled -}}
+{{- $serviceName := include "akkeris.regionApi.fullname" . }}
+{{- $servicePort := .Values.regionApi.service.servicePort -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+{{- if .Values.regionApi.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.regionApi.ingress.annotations | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.regionApi.fullname" . }}
+  labels:
+{{ include "akkeris.labels" . | indent 4 }}
+spec:
+rules:
+  {{- range .Values.regionApi.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.regionApi.ingress.tls }}
+  tls:
+{{ toYaml .Values.regionApi.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}

@@ -1,52 +1,97 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "akkeris.fullname" . }}
+  name: {{ include "akkeris.buildhsuttle.fullname" . }}
   labels:
-{{ include "akkeris.labels" . | indent 4 }}
+{{ include "akkeris.buildhsuttle.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.buildhsuttle.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "akkeris.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- include "akkeris.buildhsuttle.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.server.strategy | indent 4 }}
+  {{- end }}
   template:
     metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "akkeris.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-    spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+    {{- if .Values.buildhsuttle.podAnnotations }}
+      annotations:
+{{ toYaml .Values.buildhsuttle.podAnnotations | indent 8 }}
     {{- end }}
+      labels:
+        {{- include "akkeris.buildhsuttle.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.buildhsuttle.schedulerName }}
+      schedulerName: "{{ .Values.buildhsuttle.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.buildhsuttle.priorityClassName }}
+      priorityClassName: "{{ .Values.buildhsuttle.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.buildhsuttle.name }}
+          image: "{{ .Values.buildhsuttle.image.repository }}:{{ .Values.buildhsuttle.image.tag }}"
+          imagePullPolicy: {{ .Values.buildhsuttle.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .akkeris.buildhsuttle.name }}
+          {{- range .Values.buildhsuttle.secrets }}
+          - secretRef:
+            name: {{ . }}
+          {{- end }}
+          env:
+            {{- range $key, $value := .Values.buildshuttle.extraEnv }}
+            - name: {{ $key }}
+              value: {{ $value }}
+            {{- end }}
+            - name: PORT
+              value: 9000
+            - name: DOCKER_BUILD_IMAGE
+              value: "{{ .Values.buildhsuttle.image.repository }}:{{ .Values.buildhsuttle.image.tag }}"
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 9000
               protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
           readinessProbe:
-            httpGet:
-              path: /
-              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 9000
+            timeoutSeconds: 1
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+          volumeMounts:
+          - mountPath: /var/run/docker.sock
+            name: docker-socket
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.buildhsuttle.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml .Values.buildhsuttle.nodeSelector | indent 8 }}
     {{- end }}
-    {{- with .Values.tolerations }}
+    {{- if .Values.buildhsuttle.securityContext }}
+      securityContext:
+{{ toYaml .Values.buildhsuttle.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.buildhsuttle.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
+{{ toYaml .Values.buildhsuttle.tolerations | indent 8 }}
     {{- end }}
+    {{- if .Values.buildhsuttle.affinity }}
+      affinity:
+{{ toYaml .Values.buildhsuttle.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /var/run/docker.sock
+          type: File
+        name: docker-socket
+      - emptyDir: {}
+        name: dind-storage
