@@ -1,0 +1,108 @@
+apiVersion: v1
+data:
+  CLUSTER: {{.Values.name}}
+  DEFAULT_DOMAIN: {{.Values.name}}.{{.Values.domain}}
+  INSIDE_DOMAIN: {{.Values.name}}i.{{.Values.domain}}
+  KUBERNETES_API_SERVER: {{.Values.kubernetesapiurl}}
+  KUBERNETES_TOKEN_VAULT_PATH: {{.Values.kubernetestokenvaultpath}}
+  NAMESPACE_BLACKLIST: kube-system,kube-public,quay-enterprise,subsystems,brokers,testcafe,akkeris-system,istio-system,nginx-ingress-i,prometheus,sites-system,velero
+  REGIONAPI_SECRET: {{.Values.regionapisecretvaultpath}}
+  REGIONAPI_URL: {{.Values.regionapiurl}}
+kind: ConfigMap
+metadata:
+  name: service-watcher-istio
+  namespace: akkeris-system
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: service-watcher-istio
+  name: service-watcher-istio
+  namespace: akkeris-system
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: service-watcher-istio
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: service-watcher-istio
+        name: service-watcher-istio
+      name: service-watcher-istio
+    spec:
+      containers:
+      - env:
+        - name: CLUSTER
+          valueFrom:
+            configMapKeyRef:
+              key: CLUSTER
+              name: service-watcher-istio
+        - name: DEFAULT_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              key: DEFAULT_DOMAIN
+              name: service-watcher-istio
+        - name: INSIDE_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              key: INSIDE_DOMAIN
+              name: service-watcher-istio
+        - name: KUBERNETES_TOKEN_VAULT_PATH
+          valueFrom:
+            configMapKeyRef:
+              key: KUBERNETES_TOKEN_VAULT_PATH
+              name: service-watcher-istio
+        - name: KUBERNETES_API_SERVER
+          valueFrom:
+            configMapKeyRef:
+              key: KUBERNETES_API_SERVER
+              name: service-watcher-istio
+        - name: NAMESPACE_BLACKLIST
+          valueFrom:
+            configMapKeyRef:
+              key: NAMESPACE_BLACKLIST
+              name: service-watcher-istio
+        - name: REGIONAPI_SECRET
+          valueFrom:
+            configMapKeyRef:
+              key: REGIONAPI_SECRET
+              name: service-watcher-istio
+        - name: REGIONAPI_URL
+          valueFrom:
+            configMapKeyRef:
+              key: REGIONAPI_URL
+              name: service-watcher-istio
+        - name: VAULT_ADDR
+          valueFrom:
+            secretKeyRef:
+              key: VAULT_ADDR
+              name: akkeris-system-vault
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: VAULT_TOKEN
+              name: akkeris-system-vault
+        image: akkeris/service-watcher-istio:release-12
+        imagePullPolicy: IfNotPresent
+        name: service-watcher-istio
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

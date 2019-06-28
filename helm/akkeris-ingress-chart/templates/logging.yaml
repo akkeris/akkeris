@@ -1,0 +1,195 @@
+{{ if .Values.logging.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluentd-http
+  namespace: {{.Release.Namespace}}
+  labels:
+    app: fluentd-http
+  annotations:
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  ports:
+  - name: fluentd-tcp
+    port: 24224
+    protocol: TCP
+  - name: fluentd-udp
+    port: 24224
+    protocol: UDP
+  selector:
+    app: fluentd-http
+---
+apiVersion: "config.istio.io/v1alpha2"
+kind: logentry
+metadata:
+  name: accesslog
+  namespace: {{.Release.Namespace}}
+  annotations:
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  severity: '"info"'
+  variables:
+    app: destination.labels["app"] | destination.workload.name | ""
+    bytes: response.size | 0
+    dyno: destination.name | ""
+    from: destination.container.name | ""
+    fwd: request.headers["x-forwarded-for"] | source.ip | ""
+    host: request.host | ""
+    method: request.method | ""
+    path: request.path | ""
+    request_id: request.headers["x-request-id"] | ""
+    service: response.duration | "0ms"
+    source: source.labels["app"] | source.workload.name | ""
+    source_space: source.labels["namespace"] | source.workload.namespace | ""
+    space: destination.labels["namespace"] | destination.workload.namespace | ""
+    status: response.code | 0
+    total: response.duration | "0ms"
+  monitored_resource_type: '"UNSPECIFIED"'
+---
+kind: ConfigMap
+apiVersion: v1
+data:
+  fluent.conf: |-
+    # Takes the messages sent over TCP
+    <source>
+      type forward
+    </source>
+    <filter **>
+      @type record_transformer
+      enable_ruby
+    </filter>
+    <match **>
+      @type kafka_buffered
+      {{ if .Values.logging.zookeeper }}
+      zookeeper {{ .Values.logging.zookeeper }}
+      zookeeper_path /brokers/ids
+      {{ else if .Values.logging.brokers }}
+      brokers {{ .Values.logging.brokers }}
+      {{ else }}
+      {{ required "Either logging.brokers or logging.zookeeper is required. " .Values.logging.nonexistant }}
+      {{ end }}
+      default_topic istio-access-logs
+      output_data_type json
+      output_include_tag  false
+      output_include_time false
+      max_send_retries 3
+      required_acks 0
+      ack_timeout  1500
+      flush_interval 2s
+      buffer_queue_limit 128
+      num_threads 2
+    </match>
+metadata:
+  name: fluentd-http
+  namespace: {{.Release.Namespace}}
+  annotations:
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: fluentd-http
+  namespace: {{.Release.Namespace}}
+  labels:
+    app: fluentd-http
+  annotations:
+    sidecar.istio.io/inject: "false"
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: fluentd-http
+    spec:
+      containers:
+      - name: fluentd-http
+        command: 
+          - fluentd 
+          - -c 
+          - /fluentd/etc/config.d/fluent.conf
+        image: akkeris/logshuttle-fluentd-istio-http:v4
+        ports:
+        - containerPort: 24224
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 24224
+          timeoutSeconds: 1
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 150m
+            memory: 256Mi
+        volumeMounts:
+        - name: config-volume
+          mountPath: /fluentd/etc/config.d
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: config-volume
+        configMap:
+          name: fluentd-http
+---
+# Configuration for a fluentd handler
+apiVersion: "config.istio.io/v1alpha2"
+kind: fluentd
+metadata:
+  name: handler
+  namespace: istio-system
+  annotations:
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  address: "fluentd-http.{{.Release.Namespace}}:24224"
+  pushIntervalDuration: 1s
+  pushTimeoutDuration: 1m
+---
+# Rule to send logentry instances to the fluentd handler
+apiVersion: "config.istio.io/v1alpha2"
+kind: rule
+metadata:
+  name: newlogtofluentd
+  namespace: {{.Release.Namespace}}
+  annotations:
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  match: (context.reporter.kind == "inbound" && source.workload.namespace != "istio-system") || (context.reporter.kind == "outbound" && source.workload.namespace == "istio-system" && destination.workload.namespace != "istio-system" && destination.workload.namespace != "kube-system" && destination.workload.namespace != "unknown")
+  actions:
+   - handler: handler.fluentd
+     instances:
+     - accesslog.logentry
+---
+{{ end }}

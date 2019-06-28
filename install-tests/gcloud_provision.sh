@@ -1,14 +1,4 @@
 #!/bin/bash
-
-# export PROVIDER=gcloud
-# export EMAIL=...
-# export PROJECT_ID=round-exchange-172320
-# export CLUSTER_NAME=kobayashi
-# export ISSUER=letsencrypt
-# export DOMAIN=akkeris-test.io
-# export REGION=us-west1
-# export ZONE="$REGION-a"
-
 # TODO: Provision a new DNS name?..
 # TODO: Install optional LDAP?..
 

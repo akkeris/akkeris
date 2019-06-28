@@ -1,0 +1,190 @@
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: apps-public-certificate
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  secretName: apps-public-certificate
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  commonName: '*.{{ required "A valid name entry required!" .Values.name }}.{{ required "A valid domain entry required!" .Values.domain }}'
+  dnsNames:
+  - {{.Values.name}}.{{.Values.domain}}
+  acme:
+    config:
+    - dns01:
+        provider: {{.Values.clusterissuer}}
+      domains:
+      - '*.{{.Values.name}}.{{.Values.domain}}'
+      - {{.Values.name}}.{{.Values.domain}}
+---
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: apps-private-certificate
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  secretName: apps-private-certificate
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  commonName: '*.{{.Values.name}}i.{{.Values.domain}}'
+  dnsNames:
+  - {{.Values.name}}i.{{.Values.domain}}
+  acme:
+    config:
+    - dns01:
+        provider: aws
+      domains:
+      - '*.{{.Values.name}}i.{{.Values.domain}}'
+      - {{.Values.name}}i.{{.Values.domain}}
+---
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: star-certificate
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
+    "app.kubernetes.io/name": "akkeris"
+    "helm.sh/chart": "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    "app.kubernetes.io/managed-by": "{{ .Release.Service }}"
+    "app.kubernetes.io/instance": "{{ .Release.Name }}"
+    "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
+    "app.kubernetes.io/component": "ingress"
+spec:
+  secretName: star-certificate
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  commonName: '*.{{.Values.domain}}'
+  dnsNames:
+  - {{.Values.domain}}
+  acme:
+    config:
+    - dns01:
+        provider: aws
+      domains:
+      - '*.{{.Values.domain}}'
+      - {{.Values.domain}}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: apps-public
+  namespace: sites-system
+spec:
+  selector:
+    istio: apps-public-ingressgateway
+  servers:
+  - hosts:
+    - "*.{{.Values.name}}.{{.Values.domain}}"
+    port:
+      name: https-apps-public
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: apps-public-certificate
+      minProtocolVersion: TLSV1_2
+      mode: SIMPLE
+      privateKey: /etc/istio/apps-public-certificate/tls.key
+      serverCertificate: /etc/istio/apps-public-certificate/tls.crt
+  - hosts:
+    - "*.{{.Values.name}}.{{.Values.domain}}"
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: apps-private
+  namespace: sites-system
+spec:
+  selector:
+    istio: apps-private-ingressgateway
+  servers:
+  - hosts:
+    - "*.{{.Values.name}}i.{{.Values.domain}}"
+    port:
+      name: https-apps-private
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: apps-private-certificate
+      minProtocolVersion: TLSV1_2
+      mode: SIMPLE
+      privateKey: /etc/istio/apps-private-certificate/tls.key
+      serverCertificate: /etc/istio/apps-private-certificate/tls.crt
+  - hosts:
+    - "*.{{.Values.name}}i.{{.Values.domain}}"
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+    tls:
+      httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: sites-public
+  namespace: sites-system
+spec:
+  selector:
+    istio: sites-public-ingressgateway
+  servers:
+  - hosts:
+    - sni-sites-public.{{.Values.domain}}
+    port:
+      name: https-sites-public
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: star-certificate
+      minProtocolVersion: TLSV1_2
+      mode: SIMPLE
+      privateKey: /etc/istio/star-certificate/tls.key
+      serverCertificate: /etc/istio/star-certificate/tls.crt
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: sites-private
+  namespace: sites-system
+spec:
+  selector:
+    istio: sites-private-ingressgateway
+  servers:
+  - hosts:
+    - sni-sites-private.{{.Values.domain}}
+    port:
+      name: https-sites-private
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: star-certificate
+      minProtocolVersion: TLSV1_2
+      mode: SIMPLE
+      privateKey: /etc/istio/star-certificate/tls.key
+      serverCertificate: /etc/istio/star-certificate/tls.crt

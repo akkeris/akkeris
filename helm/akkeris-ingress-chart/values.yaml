@@ -1,0 +1,9 @@
+name: maru
+domain: example.com
+clusterissuer: aws
+kubernetestokenvaultpath: 
+kubernetesapiurl: kubernetes.default
+regionapisecretvaultpath: 
+regionapiurl: http://region-api.akkeris-system.svc.cluster.local
+logging:
+  enabled: true
