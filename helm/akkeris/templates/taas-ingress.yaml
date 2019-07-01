@@ -1,0 +1,30 @@
+{{- if and .Values.taas.enabled .Values.taas.ingress.enabled -}}
+{{- $serviceName := include "akkeris.taas.fullname" . }}
+{{- $servicePort := .Values.taas.service.servicePort -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+{{- if .Values.taas.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.taas.ingress.annotations | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.taas.fullname" . }}
+  labels:
+{{ include "akkeris.labels" . | indent 4 }}
+spec:
+rules:
+  {{- range .Values.taas.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.taas.ingress.tls }}
+  tls:
+{{ toYaml .Values.taas.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}

@@ -3,8 +3,9 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
-    {{- include "akkeris.logession.labels" . | nindent 4 }}
-  name: {{ template "akkeris.logession.fullname" . }}
+    {{- include "akkeris.logsession.labels" . | nindent 4 }}
+  name: {{ template "akkeris.logsession.fullname" . }}
+  {{- with .Values.logsession.configmap.data }}
 data:
   {{- toYaml . | nindent 2 }}
 {{- end }}

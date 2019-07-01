@@ -1,42 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "akkeris.buildhsuttle.fullname" . }}
+  name: {{ include "akkeris.buildshuttle.fullname" . }}
   labels:
-{{ include "akkeris.buildhsuttle.labels" . | indent 4 }}
+{{ include "akkeris.buildshuttle.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.buildhsuttle.replicaCount }}
+  replicas: {{ .Values.buildshuttle.replicaCount }}
   selector:
     matchLabels:
-      {{- include "akkeris.buildhsuttle.matchLabels" . | nindent 6 }}
+      {{- include "akkeris.buildshuttle.matchLabels" . | nindent 6 }}
   strategy:
-{{ toYaml .Values.server.strategy | indent 4 }}
-  {{- end }}
+{{ toYaml .Values.buildshuttle.strategy | indent 4 }}
   template:
     metadata:
-    {{- if .Values.buildhsuttle.podAnnotations }}
+    {{- if .Values.buildshuttle.podAnnotations }}
       annotations:
-{{ toYaml .Values.buildhsuttle.podAnnotations | indent 8 }}
+{{ toYaml .Values.buildshuttle.podAnnotations | indent 8 }}
     {{- end }}
       labels:
-        {{- include "akkeris.buildhsuttle.labels" . | nindent 8 }}
+        {{- include "akkeris.buildshuttle.labels" . | nindent 8 }}
     spec:
-{{- if .Values.buildhsuttle.schedulerName }}
-      schedulerName: "{{ .Values.buildhsuttle.schedulerName }}"
+{{- if .Values.buildshuttle.schedulerName }}
+      schedulerName: "{{ .Values.buildshuttle.schedulerName }}"
 {{- end }}
       serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
-{{- if .Values.buildhsuttle.priorityClassName }}
-      priorityClassName: "{{ .Values.buildhsuttle.priorityClassName }}"
+{{- if .Values.buildshuttle.priorityClassName }}
+      priorityClassName: "{{ .Values.buildshuttle.priorityClassName }}"
 {{- end }}
       revisionHistoryLimit: 10
       containers:
-        - name: {{ template "akkeris.name" . }}-{{ .Values.buildhsuttle.name }}
-          image: "{{ .Values.buildhsuttle.image.repository }}:{{ .Values.buildhsuttle.image.tag }}"
-          imagePullPolicy: {{ .Values.buildhsuttle.image.pullPolicy }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.buildshuttle.name }}
+          image: "{{ .Values.buildshuttle.image.repository }}:{{ .Values.buildshuttle.image.tag }}"
+          imagePullPolicy: {{ .Values.buildshuttle.image.pullPolicy }}
           envFrom:
           - configMapRef:
-              name: {{ .akkeris.buildhsuttle.name }}
-          {{- range .Values.buildhsuttle.secrets }}
+              name: {{ .Values.buildshuttle.name }}
+          {{- range .Values.buildshuttle.secrets }}
           - secretRef:
             name: {{ . }}
           {{- end }}
@@ -48,7 +47,7 @@ spec:
             - name: PORT
               value: 9000
             - name: DOCKER_BUILD_IMAGE
-              value: "{{ .Values.buildhsuttle.image.repository }}:{{ .Values.buildhsuttle.image.tag }}"
+              value: "{{ .Values.buildshuttle.image.repository }}:{{ .Values.buildshuttle.image.tag }}"
           ports:
             - name: http
               containerPort: 9000
@@ -69,21 +68,21 @@ spec:
       imagePullSecrets:
       {{ toYaml .Values.imagePullSecrets | indent 2 }}
     {{- end }}
-    {{- if .Values.buildhsuttle.nodeSelector }}
+    {{- if .Values.buildshuttle.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.buildhsuttle.nodeSelector | indent 8 }}
+{{ toYaml .Values.buildshuttle.nodeSelector | indent 8 }}
     {{- end }}
-    {{- if .Values.buildhsuttle.securityContext }}
+    {{- if .Values.buildshuttle.securityContext }}
       securityContext:
-{{ toYaml .Values.buildhsuttle.securityContext | indent 8 }}
+{{ toYaml .Values.buildshuttle.securityContext | indent 8 }}
     {{- end }}
-    {{- if .Values.buildhsuttle.tolerations }}
+    {{- if .Values.buildshuttle.tolerations }}
       tolerations:
-{{ toYaml .Values.buildhsuttle.tolerations | indent 8 }}
+{{ toYaml .Values.buildshuttle.tolerations | indent 8 }}
     {{- end }}
-    {{- if .Values.buildhsuttle.affinity }}
+    {{- if .Values.buildshuttle.affinity }}
       affinity:
-{{ toYaml .Values.buildhsuttle.affinity | indent 8 }}
+{{ toYaml .Values.buildshuttle.affinity | indent 8 }}
     {{- end }}
       dnsPolicy: ClusterFirst
       restartPolicy: Always

@@ -1,0 +1,72 @@
+{{- if .Values.taas.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.taas.fullname" . }}
+  labels:
+{{ include "akkeris.taas.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.taas.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.taas.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.taas.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.taas.podAnnotations }}
+      annotations:
+{{ toYaml .Values.taas.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.taas.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.taas.schedulerName }}
+      schedulerName: "{{ .Values.taas.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.taas.priorityClassName }}
+      priorityClassName: "{{ .Values.taas.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.taas.name }}
+          image: "{{ .Values.taas.image.repository }}:{{ .Values.taas.image.tag }}"
+          imagePullPolicy: {{ .Values.taas.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.taas.name }}
+        {{- range .Values.taas.secrets }}
+        - secretRef:
+          name: {{ . }}
+        {{- end }}
+          ports:
+            - name: tcp
+              containerPort: 4000
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.taas.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.taas.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.taas.securityContext }}
+      securityContext:
+{{ toYaml .Values.taas.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.taas.tolerations }}
+      tolerations:
+{{ toYaml .Values.taas.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.taas.affinity }}
+      affinity:
+{{ toYaml .Values.taas.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+{{- end }}

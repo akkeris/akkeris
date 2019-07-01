@@ -36,4 +36,3 @@ spec:
   selector:
     {{- include "akkeris.buildshuttle.matchLabels" . | nindent 4 }}
   type: "{{ .Values.buildshuttle.service.type }}"
-{{- end }}

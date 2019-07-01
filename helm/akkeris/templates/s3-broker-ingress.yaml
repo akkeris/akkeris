@@ -1,0 +1,30 @@
+{{- if and .Values.s3Broker.enabled .Values.s3Broker.ingress.enabled -}}
+{{- $serviceName := include "akkeris.s3Broker.fullname" . }}
+{{- $servicePort := .Values.s3Broker.service.servicePort -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+{{- if .Values.s3Broker.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.s3Broker.ingress.annotations | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.s3Broker.fullname" . }}
+  labels:
+{{ include "akkeris.labels" . | indent 4 }}
+spec:
+rules:
+  {{- range .Values.s3Broker.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.s3Broker.ingress.tls }}
+  tls:
+{{ toYaml .Values.s3Broker.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}

@@ -1,0 +1,30 @@
+{{- if .Values.elasticacheBroker.ingress.enabled -}}
+{{- $serviceName := include "akkeris.elasticacheBroker.fullname" . }}
+{{- $servicePort := .Values.elasticacheBroker.service.servicePort -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+{{- if .Values.elasticacheBroker.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.elasticacheBroker.ingress.annotations | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.elasticacheBroker.fullname" . }}
+  labels:
+{{ include "akkeris.labels" . | indent 4 }}
+spec:
+rules:
+  {{- range .Values.elasticacheBroker.ingress.hosts }}
+    {{- $url := splitList "/" . }}
+    - host: {{ first $url }}
+      http:
+        paths:
+          - path: /{{ rest $url | join "/" }}
+            backend:
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+  {{- end -}}
+{{- if .Values.elasticacheBroker.ingress.tls }}
+  tls:
+{{ toYaml .Values.elasticacheBroker.ingress.tls | indent 4 }}
+  {{- end -}}
+{{- end -}}

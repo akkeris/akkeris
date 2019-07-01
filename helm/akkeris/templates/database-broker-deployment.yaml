@@ -11,8 +11,7 @@ spec:
     matchLabels:
       {{- include "akkeris.databaseBroker.matchLabels" . | nindent 6 }}
   strategy:
-{{ toYaml .Values.server.strategy | indent 4 }}
-  {{- end }}
+{{ toYaml .Values.databaseBroker.strategy | indent 4 }}
   template:
     metadata:
     {{- if .Values.databaseBroker.podAnnotations }}
@@ -36,23 +35,27 @@ spec:
           imagePullPolicy: {{ .Values.databaseBroker.image.pullPolicy }}
           envFrom:
           - configMapRef:
-              name: {{ .akkeris.databaseBroker.name }}
+              name: {{ .Values.databaseBroker.name }}
           {{- range .Values.databaseBroker.secrets }}
           - secretRef:
               name: {{ . }}
           {{- end }}
+          - command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
           ports:
             - name: http
               containerPort: 8443
               protocol: TCP
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-        - name: {{ template "akkeris.name" . }}-{{ .Values.databaseBroker.name }}-{{ .Values.databaseBroker.worker.name }}
-          image: "{{ .Values.databaseBroker.repository }}:{{ .Values.databaseBroker.tag }}"
-          imagePullPolicy: "{{ .Values.databaseBroker.pullPolicy }}"
+            {{- toYaml .Values.databaseBroker.resources | nindent 12 }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.databaseBroker.worker.name }}
+          image: "{{ .Values.databaseBroker.image.repository }}:{{ .Values.databaseBroker.image.tag }}"
+          imagePullPolicy: "{{ .Values.databaseBroker.image.pullPolicy }}"
           envFrom:
           - configMapRef:
-              name: {{ .akkeris.databaseBroker.name }}
+              name: {{ .Values.databaseBroker.name }}
           {{- range .Values.databaseBroker.secrets }}
           - secretRef:
               name: {{ . }}
@@ -63,7 +66,7 @@ spec:
             - -stderrthreshold=0
             - -background-tasks
           resources:
-{{ toYaml .Values.configmapReload.resources | indent 12 }}
+{{ toYaml .Values.databaseBroker.worker.resources | indent 12 }}
           
     {{- if .Values.imagePullSecrets }} 
       imagePullSecrets:
@@ -88,4 +91,5 @@ spec:
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
+{{- end }}
 

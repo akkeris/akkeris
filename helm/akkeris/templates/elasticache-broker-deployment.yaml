@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.elasticacheBroker.fullname" . }}
+  labels:
+{{ include "akkeris.elasticacheBroker.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.elasticacheBroker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.elasticacheBroker.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.elasticacheBroker.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.elasticacheBroker.podAnnotations }}
+      annotations:
+{{ toYaml .Values.elasticacheBroker.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.elasticacheBroker.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.elasticacheBroker.schedulerName }}
+      schedulerName: "{{ .Values.elasticacheBroker.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.elasticacheBroker.priorityClassName }}
+      priorityClassName: "{{ .Values.elasticacheBroker.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.elasticacheBroker.name }}
+          image: "{{ .Values.elasticacheBroker.image.repository }}:{{ .Values.elasticacheBroker.image.tag }}"
+          imagePullPolicy: {{ .Values.elasticacheBroker.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.elasticacheBroker.name }}
+          {{- range .Values.elasticacheBroker.secrets }}
+          - secretRef:
+              name: {{ . }}
+          {{- end }}
+          - command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+          ports:
+            - name: http
+              containerPort: 8443
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.elasticacheBroker.resources | nindent 12 }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.elasticacheBroker.worker.name }}
+          image: "{{ .Values.elasticacheBroker.image.repository }}:{{ .Values.elasticacheBroker.image.tag }}"
+          imagePullPolicy: "{{ .Values.elasticacheBroker.image.pullPolicy }}"
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.elasticacheBroker.name }}
+          {{- range .Values.elasticacheBroker.secrets }}
+          - secretRef:
+              name: {{ . }}
+          {{- end }}
+          command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+            - -background-tasks
+          resources:
+{{ toYaml .Values.elasticacheBroker.worker.resources | indent 12 }}
+          
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.elasticacheBroker.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.elasticacheBroker.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.elasticacheBroker.securityContext }}
+      securityContext:
+{{ toYaml .Values.elasticacheBroker.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.elasticacheBroker.tolerations }}
+      tolerations:
+{{ toYaml .Values.elasticacheBroker.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.elasticacheBroker.affinity }}
+      affinity:
+{{ toYaml .Values.elasticacheBroker.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+

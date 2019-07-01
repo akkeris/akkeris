@@ -32,4 +32,3 @@ spec:
   selector:
     {{- include "akkeris.logshuttle.matchLabels" . | nindent 4 }}
   type: "{{ .Values.logshuttle.service.type }}"
-{{- end }}

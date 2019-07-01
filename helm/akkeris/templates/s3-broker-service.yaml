@@ -1,0 +1,36 @@
+{{- if .Values.s3Broker.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.s3Broker.service.annotations }}
+  annotations:
+{{ toYaml .Values.s3Broker.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "akkeris.s3Broker.labels" . | nindent 4 }}
+{{- if .Values.s3Broker.service.labels }}
+{{ toYaml .Values.s3Broker.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.s3Broker.fullname" . }}
+
+spec:
+{{- if .Values.s3Broker.service.clusterIP }}
+  clusterIP: {{ .Values.s3Broker.service.clusterIP }}
+{{- end }}
+{{- if .Values.s3Broker.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.s3Broker.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.s3Broker.service.type }}
+  ports:
+    - port: {{ .Values.s3Broker.service.servicePort }}
+      targetPort: 8443
+      protocol: TCP
+      name: http
+    {{- if .Values.s3Broker.service.nodePort }}
+      nodePort: {{ .Values.s3Broker.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "akkeris.s3Broker.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.s3Broker.service.type }}"
+{{- end }}

@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "akkeris.logshuttle.labels" . | nindent 4 }}
   name: {{ template "akkeris.logshuttle.fullname" . }}
+{{- with .Values.logshuttle.configmap.data }}
 data:
   {{- toYaml . | nindent 2 }}
 {{- end }}

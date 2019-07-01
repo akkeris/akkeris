@@ -1,0 +1,13 @@
+{{- if .Values.s3Broker.enabled -}}
+# This is a simple example of using a config map to create a single page static site.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "akkeris.s3Broker.labels" . | nindent 4 }}
+  name: {{ template "akkeris.s3Broker.fullname" . }}
+{{- with .Values.s3Broker.configmap.data }}
+data:
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}

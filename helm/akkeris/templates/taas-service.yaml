@@ -1,0 +1,35 @@
+{{- if .Values.taas.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.taas.service.annotations }}
+  annotations:
+{{ toYaml .Values.taas.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "akkeris.taas.labels" . | nindent 4 }}
+{{- if .Values.taas.service.labels }}
+{{ toYaml .Values.taas.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.taas.fullname" . }}
+spec:
+{{- if .Values.taas.service.clusterIP }}
+  clusterIP: {{ .Values.taas.service.clusterIP }}
+{{- end }}
+{{- if .Values.taas.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.taas.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.taas.service.type }}
+  ports:
+    - port: {{ .Values.taas.service.servicePort }}
+      targetPort: 4000
+      protocol: TCP
+      name: http
+    {{- if .Values.taas.service.nodePort }}
+      nodePort: {{ .Values.taas.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "akkeris.taas.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.taas.service.type }}"
+{{- end }}

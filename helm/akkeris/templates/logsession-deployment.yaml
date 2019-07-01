@@ -10,8 +10,7 @@ spec:
     matchLabels:
       {{- include "akkeris.logsession.matchLabels" . | nindent 6 }}
   strategy:
-{{ toYaml .Values.server.strategy | indent 4 }}
-  {{- end }}
+{{ toYaml .Values.logsession.strategy | indent 4 }}
   template:
     metadata:
     {{- if .Values.logsession.podAnnotations }}
@@ -35,7 +34,7 @@ spec:
           imagePullPolicy: {{ .Values.logsession.image.pullPolicy }}
           envFrom:
           - configMapRef:
-              name: {{ .akkeris.logsession.name }}
+              name: {{ .Values.logsession.name }}
         {{- range .Values.logsession.secrets }}
         - secretRef:
           name: {{ . }}

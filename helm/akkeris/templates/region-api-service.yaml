@@ -32,4 +32,3 @@ spec:
   selector:
     {{- include "akkeris.regionApi.matchLabels" . | nindent 4 }}
   type: "{{ .Values.regionApi.service.type }}"
-{{- end }}

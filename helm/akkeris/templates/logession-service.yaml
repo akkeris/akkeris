@@ -32,4 +32,3 @@ spec:
   selector:
     {{- include "akkeris.logsession.matchLabels" . | nindent 4 }}
   type: "{{ .Values.logsession.service.type }}"
-{{- end }}

@@ -1,0 +1,95 @@
+{{- if .Values.s3Broker.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.s3Broker.fullname" . }}
+  labels:
+{{ include "akkeris.s3Broker.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.s3Broker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.s3Broker.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.s3Broker.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.s3Broker.podAnnotations }}
+      annotations:
+{{ toYaml .Values.s3Broker.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.s3Broker.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.s3Broker.schedulerName }}
+      schedulerName: "{{ .Values.s3Broker.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.s3Broker.priorityClassName }}
+      priorityClassName: "{{ .Values.s3Broker.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.s3Broker.name }}
+          image: "{{ .Values.s3Broker.image.repository }}:{{ .Values.s3Broker.image.tag }}"
+          imagePullPolicy: {{ .Values.s3Broker.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.s3Broker.name }}
+          {{- range .Values.s3Broker.secrets }}
+          - secretRef:
+              name: {{ . }}
+          {{- end }}
+          - command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+          ports:
+            - name: http
+              containerPort: 8443
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.s3Broker.resources | nindent 12 }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.s3Broker.worker.name }}
+          image: "{{ .Values.s3Broker.image.repository }}:{{ .Values.s3Broker.image.tag }}"
+          imagePullPolicy: "{{ .Values.s3Broker.image.pullPolicy }}"
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.s3Broker.name }}
+          {{- range .Values.s3Broker.secrets }}
+          - secretRef:
+              name: {{ . }}
+          {{- end }}
+          command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+            - -background-tasks
+          resources:
+{{ toYaml .Values.s3Broker.worker.resources | indent 12 }}
+          
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.s3Broker.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.s3Broker.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.s3Broker.securityContext }}
+      securityContext:
+{{ toYaml .Values.s3Broker.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.s3Broker.tolerations }}
+      tolerations:
+{{ toYaml .Values.s3Broker.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.s3Broker.affinity }}
+      affinity:
+{{ toYaml .Values.s3Broker.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+{{- end }}
+

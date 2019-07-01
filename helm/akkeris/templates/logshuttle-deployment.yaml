@@ -10,8 +10,7 @@ spec:
     matchLabels:
       {{- include "akkeris.logshuttle.matchLabels" . | nindent 6 }}
   strategy:
-{{ toYaml .Values.server.strategy | indent 4 }}
-  {{- end }}
+{{ toYaml .Values.logshuttle.strategy | indent 4 }}
   template:
     metadata:
     {{- if .Values.logshuttle.podAnnotations }}
@@ -35,7 +34,7 @@ spec:
           imagePullPolicy: {{ .Values.logshuttle.image.pullPolicy }}
           envFrom:
           - configMapRef:
-              name: {{ .akkeris.logshuttle.name }}
+              name: {{ .Values.logshuttle.name }}
         {{- range .Values.logshuttle.secrets }}
         - secretRef:
           name: {{ . }}

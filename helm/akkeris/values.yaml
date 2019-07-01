@@ -7,13 +7,7 @@ replicaCount: 1
 serviceAccounts:
   akkeris:
     create: "true"
-    name:
-
-controller: 
-  image:
-    repository: akkeris/controller-api
-    tag: stable
-    pullPolicy: IfNotPresent
+    name: akkeris
 
 regionApi:
   ## region-api container name
@@ -54,11 +48,11 @@ regionApi:
     #      - region-api.domain.com
 
   ## region-api Deployment Strategy type
-    strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 1
-      type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
 
   ## Node tolerations for region-api scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -117,6 +111,9 @@ regionApi:
     servicePort: 80
     # nodePort: 30000
     type: nodePort
+  
+  configmap:
+    data:
 
 logsession:
   ## logsession container name
@@ -157,11 +154,11 @@ logsession:
     #      - logsession.domain.com
 
   ## logsession Deployment Strategy type
-    strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 1
-      type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
 
   ## Node tolerations for logsession scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -220,6 +217,9 @@ logsession:
     servicePort: 80
     # nodePort: 30000
     type: nodePort
+  
+  configmap:
+    data:
 
 buildshuttle:
   ## buildshuttle container name
@@ -269,11 +269,11 @@ buildshuttle:
     #      - buildshuttle.domain.com
 
   ## buildshuttle Deployment Strategy type
-    strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 0
-      type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
 
   ## Node tolerations for buildshuttle scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -344,7 +344,11 @@ buildshuttle:
     # nodePort: 30000
     type: nodePort
 
+  configmap:
+    data:
+
 databaseBroker:
+  enabled: true
   ## database-broker container name
   ##
   name: database-broker
@@ -358,6 +362,13 @@ databaseBroker:
   
   worker:
     name: database-broker-worker
+    resources: {}
+      # limits:
+      #   cpu: 10m
+      #   memory: 32Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 32Mi
 
   ## database-broker priorityClassName
   ##
@@ -386,11 +397,11 @@ databaseBroker:
     #      - database-broker.domain.com
 
   ## database-broker Deployment Strategy type
-    strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 1
-      type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
 
   ## Node tolerations for database-broker scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -450,7 +461,127 @@ databaseBroker:
     # nodePort: 30000
     type: nodePort
 
-  logshuttle:
+  configmap:
+    data:
+
+elasticacheBroker:
+  enabled: true
+  ## elasticache-broker container name
+  ##
+  name: elasticache-broker
+
+  ## elasticache-broker container image
+  ##
+  image:
+    repository: akkeris/elasticache-broker
+    tag: release-6
+    pullPolicy: IfNotPresent
+  
+  worker:
+    name: elasticache-broker-worker
+    resources: {}
+      # limits:
+      #   cpu: 10m
+      #   memory: 32Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 32Mi
+
+  ## elasticache-broker priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, elasticache-broker Ingress will be created
+    ##
+    enabled: false
+
+    ## elasticache-broker Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## elasticache-broker Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - elasticache-broker.domain.com
+
+    tls: []
+    #  - secretName: elasticache-broker-tls
+    #    hosts:
+    #      - elasticache-broker.domain.com
+
+  ## elasticache-broker Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for elasticache-broker scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for elasticache-broker pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to elasticache-broker pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## elasticache-broker resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to elasticache-broker pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the elasticache-broker service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+  configmap:
+    data:
+
+logshuttle:
   ## logshuttle container name
   ##
   name: logshuttle
@@ -489,11 +620,11 @@ databaseBroker:
     #      - logshuttle.domain.com
 
   ## logshuttle Deployment Strategy type
-    strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 1
-      type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
 
   ## Node tolerations for logshuttle scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
@@ -552,3 +683,229 @@ databaseBroker:
     servicePort: 80
     # nodePort: 30000
     type: nodePort
+
+  configmap:
+    data:
+
+s3Broker:
+  enabled: true
+  ## s3-broker container name
+  ##
+  name: s3-broker
+
+  ## s3-broker container image
+  ##
+  image:
+    repository: akkeris/s3-broker
+    tag: release-6
+    pullPolicy: IfNotPresent
+  
+  worker:
+    name: s3-broker-worker
+    resources: {}
+      # limits:
+      #   cpu: 10m
+      #   memory: 32Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 32Mi
+
+  ## s3-broker priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, s3-broker Ingress will be created
+    ##
+    enabled: false
+
+    ## s3-broker Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## s3-broker Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - s3-broker.domain.com
+
+    tls: []
+    #  - secretName: s3-broker-tls
+    #    hosts:
+    #      - s3-broker.domain.com
+
+  ## s3-broker Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for s3-broker scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for s3-broker pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to s3-broker pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## s3-broker resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to s3-broker pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the s3-broker service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+  configmap:
+    data:
+
+taas:
+  ## taas container name
+  ##
+  name: taas
+
+  ## taas container image
+  ##
+  image:
+    repository: akkeris/taas
+    tag: oneoffpod-vs-job-64
+    pullPolicy: IfNotPresent
+
+  ## taas priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, taas Ingress will be created
+    ##
+    enabled: false
+
+    ## taas Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## taas Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - taas.domain.com
+
+    tls: []
+    #  - secretName: taas-tls
+    #    hosts:
+    #      - taas.domain.com
+
+  ## taas Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for taas scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for taas pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to taas pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## taas resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to taas pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the taas service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+  configmap:
+    data:

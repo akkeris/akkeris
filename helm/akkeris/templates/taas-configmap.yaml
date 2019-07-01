@@ -1,4 +1,4 @@
-# This is a simple example of using a config map to create a single page static site.
+{{- if .Values.taas.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,4 +8,5 @@ metadata:
 {{- with .Values.regionApi.configmap.data }}
 data:
   {{- toYaml . | nindent 2 }}
-{{- end }}
+  {{- end }}
+{{- end}}
