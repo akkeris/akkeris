@@ -43,11 +43,12 @@ spec:
     bytes: response.size | 0
     dyno: destination.name | ""
     from: destination.container.name | ""
-    fwd: request.headers["x-forwarded-for"] | source.ip | ""
+    fwd: request.headers["x-forwarded-for"] | ""
     host: request.host | ""
     method: request.method | ""
     path: request.path | ""
     request_id: request.headers["x-request-id"] | ""
+    origin: request.headers["origin"] | ""
     service: response.duration | "0ms"
     source: source.labels["app"] | source.workload.name | ""
     source_space: source.labels["namespace"] | source.workload.namespace | ""

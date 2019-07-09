@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "$ISTIO_VERSION" == "" ]; then
-	export ISTIO_VERSION="1.1.8"
+	export ISTIO_VERSION="1.2.2"
 fi
 
 kubectl label namespace kube-system istio-injection=disabled
