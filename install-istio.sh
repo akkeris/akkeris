@@ -8,6 +8,10 @@ kubectl label namespace kube-system istio-injection=disabled
 helm repo add istio.io "https://storage.googleapis.com/istio-release/releases/$ISTIO_VERSION/charts/"
 helm repo update
 
+helm install istio.io/istio-init --version "$ISTIO_VERSION" --namespace istio-system --name istio-init
+echo "Waiting for CRDs jobs to finish..."
+sleep 60
+
 if [ "$USE_NODE_PORT_INGRESS" == "" ]; then
 	helm install istio.io/istio \
 		--name istio \

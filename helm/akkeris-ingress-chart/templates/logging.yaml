@@ -25,7 +25,7 @@ spec:
     app: fluentd-http
 ---
 apiVersion: "config.istio.io/v1alpha2"
-kind: logentry
+kind: instance
 metadata:
   name: accesslog
   namespace: {{.Release.Namespace}}
@@ -37,25 +37,27 @@ metadata:
     "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
     "app.kubernetes.io/component": "ingress"
 spec:
-  severity: '"info"'
-  variables:
-    app: destination.labels["app"] | destination.workload.name | ""
-    bytes: response.size | 0
-    dyno: destination.name | ""
-    from: destination.container.name | ""
-    fwd: request.headers["x-forwarded-for"] | ""
-    host: request.host | ""
-    method: request.method | ""
-    path: request.path | ""
-    request_id: request.headers["x-request-id"] | ""
-    origin: request.headers["origin"] | ""
-    service: response.duration | "0ms"
-    source: source.labels["app"] | source.workload.name | ""
-    source_space: source.labels["namespace"] | source.workload.namespace | ""
-    space: destination.labels["namespace"] | destination.workload.namespace | ""
-    status: response.code | 0
-    total: response.duration | "0ms"
-  monitored_resource_type: '"UNSPECIFIED"'
+  compiledTemplate: logentry
+  params:
+    severity: '"info"'
+    variables:
+      app: destination.labels["app"] | destination.workload.name | ""
+      bytes: response.size | 0
+      dyno: destination.name | ""
+      from: destination.container.name | ""
+      fwd: request.headers["x-forwarded-for"] | ""
+      host: request.host | ""
+      method: request.method | ""
+      path: request.path | ""
+      request_id: request.headers["x-request-id"] | ""
+      origin: request.headers["origin"] | ""
+      service: response.duration | "0ms"
+      source: source.labels["app"] | source.workload.name | ""
+      source_space: source.labels["namespace"] | source.workload.namespace | ""
+      space: destination.labels["namespace"] | destination.workload.namespace | ""
+      status: response.code | 0
+      total: response.duration | "0ms"
+    monitored_resource_type: '"UNSPECIFIED"'
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -157,9 +159,9 @@ spec:
 ---
 # Configuration for a fluentd handler
 apiVersion: "config.istio.io/v1alpha2"
-kind: fluentd
+kind: handler
 metadata:
-  name: handler
+  name: fluentd
   namespace: istio-system
   annotations:
     "app.kubernetes.io/name": "akkeris"
@@ -169,9 +171,11 @@ metadata:
     "app.kubernetes.io/version": "{{ .Chart.AppVersion }}"
     "app.kubernetes.io/component": "ingress"
 spec:
-  address: "fluentd-http.{{.Release.Namespace}}:24224"
-  pushIntervalDuration: 1s
-  pushTimeoutDuration: 1m
+  compiledAdapter: fluentd
+  params:
+    address: "fluentd-http.{{.Release.Namespace}}:24224"
+    pushIntervalDuration: 1s
+    pushTimeoutDuration: 1m
 ---
 # Rule to send logentry instances to the fluentd handler
 apiVersion: "config.istio.io/v1alpha2"
@@ -189,8 +193,8 @@ metadata:
 spec:
   match: (context.reporter.kind == "inbound" && source.workload.namespace != "istio-system") || (context.reporter.kind == "outbound" && source.workload.namespace == "istio-system" && destination.workload.namespace != "istio-system" && destination.workload.namespace != "kube-system" && destination.workload.namespace != "unknown")
   actions:
-   - handler: handler.fluentd
+   - handler: fluentd
      instances:
-     - accesslog.logentry
+     - accesslog
 ---
 {{ end }}

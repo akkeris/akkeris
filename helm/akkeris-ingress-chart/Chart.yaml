@@ -2,4 +2,4 @@ apiVersion: v1
 appVersion: "1.2"
 description: Ingress for akkeris
 name: akkeris-ingress
-version: 1.1.12
+version: 1.1.14
