@@ -36,10 +36,10 @@ spec:
           envFrom:
           - configMapRef:
               name: {{ .Values.taas.name }}
-        {{- range .Values.taas.secrets }}
-        - secretRef:
-          name: {{ . }}
-        {{- end }}
+          - secretRef:
+              name: akkeris-system-iam
+          - secretRef:
+              name: akkeris-system-vault
           ports:
             - name: tcp
               containerPort: 4000

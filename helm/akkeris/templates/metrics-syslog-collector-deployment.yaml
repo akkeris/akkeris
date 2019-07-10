@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.metricsSyslogCollector.fullname" . }}
+  labels:
+{{ include "akkeris.metricsSyslogCollector.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.metricsSyslogCollector.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.metricsSyslogCollector.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.metricsSyslogCollector.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.metricsSyslogCollector.podAnnotations }}
+      annotations:
+{{ toYaml .Values.metricsSyslogCollector.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.metricsSyslogCollector.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.metricsSyslogCollector.schedulerName }}
+      schedulerName: "{{ .Values.metricsSyslogCollector.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.metricsSyslogCollector.priorityClassName }}
+      priorityClassName: "{{ .Values.metricsSyslogCollector.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.metricsSyslogCollector.name }}
+          image: "{{ .Values.metricsSyslogCollector.image.repository }}:{{ .Values.metricsSyslogCollector.image.tag }}"
+          imagePullPolicy: {{ .Values.metricsSyslogCollector.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.metricsSyslogCollector.name }}
+          - secretRef:
+              name: akkeris-system-iam
+          - secretRef:
+              name: akkeris-system-vault
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.metricsSyslogCollector.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.metricsSyslogCollector.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.metricsSyslogCollector.securityContext }}
+      securityContext:
+{{ toYaml .Values.metricsSyslogCollector.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.metricsSyslogCollector.tolerations }}
+      tolerations:
+{{ toYaml .Values.metricsSyslogCollector.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.metricsSyslogCollector.affinity }}
+      affinity:
+{{ toYaml .Values.metricsSyslogCollector.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

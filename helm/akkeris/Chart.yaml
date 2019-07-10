@@ -6,11 +6,11 @@ version: 0.1.0
 home: https://beta.akkeris.io
 sources:
   - https://github.com/akkeris/akkeris
-  - https://github.com/akkeris/
-  - https://github.com/akkeris/
-  - https://github.com/akkeris/
-  - https://github.com/akkeris/
-  - https://github.com/akkeris/
-  - https://github.com/akkeris/
-  - https://github.com/akkeris/
+  - https://github.com/akkeris/region-api
+  - https://github.com/akkeris/database-broker
+  - https://github.com/akkeris/elasticache-broker
+  - https://github.com/akkeris/logession
+  - https://github.com/akkeris/logshuttle
+  - https://github.com/akkeris/buildshuttle
+  - https://github.com/akkeris/s3-broker
 

@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.elasticsearchBroker.fullname" . }}
+  labels:
+{{ include "akkeris.elasticsearchBroker.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.elasticsearchBroker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.elasticsearchBroker.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.elasticsearchBroker.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.elasticsearchBroker.podAnnotations }}
+      annotations:
+{{ toYaml .Values.elasticsearchBroker.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.elasticsearchBroker.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.elasticsearchBroker.schedulerName }}
+      schedulerName: "{{ .Values.elasticsearchBroker.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.elasticsearchBroker.priorityClassName }}
+      priorityClassName: "{{ .Values.elasticsearchBroker.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.elasticsearchBroker.name }}
+          image: "{{ .Values.elasticsearchBroker.image.repository }}:{{ .Values.elasticsearchBroker.image.tag }}"
+          imagePullPolicy: {{ .Values.elasticsearchBroker.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.elasticsearchBroker.name }}
+          - secretRef:
+              name: akkeris-system-iam
+          - command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+          ports:
+            - name: tcp
+              containerPort: 8443
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.elasticsearchBroker.resources | nindent 12 }}
+        - name: {{ template "akkeris.name" . }}-{{ .Values.elasticsearchBroker.worker.name }}
+          image: "{{ .Values.elasticsearchBroker.image.repository }}:{{ .Values.elasticsearchBroker.image.tag }}"
+          imagePullPolicy: "{{ .Values.elasticsearchBroker.image.pullPolicy }}"
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.elasticsearchBroker.name }}
+          - secretRef:
+              name: akkeris-system-iam
+          command:
+            - ./servicebroker
+            - -logtostderr=1
+            - -stderrthreshold=0
+            - -background-tasks
+          resources:
+{{ toYaml .Values.elasticsearchBroker.worker.resources | indent 12 }}
+          
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.elasticsearchBroker.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.elasticsearchBroker.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.elasticsearchBroker.securityContext }}
+      securityContext:
+{{ toYaml .Values.elasticsearchBroker.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.elasticsearchBroker.tolerations }}
+      tolerations:
+{{ toYaml .Values.elasticsearchBroker.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.elasticsearchBroker.affinity }}
+      affinity:
+{{ toYaml .Values.elasticsearchBroker.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+

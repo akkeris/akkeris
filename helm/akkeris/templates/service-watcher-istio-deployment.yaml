@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.serviceWatcherIstio.fullname" . }}
+  labels:
+{{ include "akkeris.serviceWatcherIstio.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.serviceWatcherIstio.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.serviceWatcherIstio.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.serviceWatcherIstio.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.serviceWatcherIstio.podAnnotations }}
+      annotations:
+{{ toYaml .Values.serviceWatcherIstio.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.serviceWatcherIstio.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.serviceWatcherIstio.schedulerName }}
+      schedulerName: "{{ .Values.serviceWatcherIstio.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.serviceWatcherIstio.priorityClassName }}
+      priorityClassName: "{{ .Values.serviceWatcherIstio.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.serviceWatcherIstio.name }}
+          image: "{{ .Values.serviceWatcherIstio.image.repository }}:{{ .Values.serviceWatcherIstio.image.tag }}"
+          imagePullPolicy: {{ .Values.serviceWatcherIstio.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.serviceWatcherIstio.name }}
+          - secretRef:
+              name: akkeris-system-vault
+          ports:
+            - name: tcp
+              containerPort: 3000
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.serviceWatcherIstio.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.serviceWatcherIstio.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.serviceWatcherIstio.securityContext }}
+      securityContext:
+{{ toYaml .Values.serviceWatcherIstio.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.serviceWatcherIstio.tolerations }}
+      tolerations:
+{{ toYaml .Values.serviceWatcherIstio.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.serviceWatcherIstio.affinity }}
+      affinity:
+{{ toYaml .Values.serviceWatcherIstio.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

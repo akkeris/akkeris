@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.routerMetrics.fullname" . }}
+  labels:
+{{ include "akkeris.routerMetrics.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.routerMetrics.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.routerMetrics.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.routerMetrics.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.routerMetrics.podAnnotations }}
+      annotations:
+{{ toYaml .Values.routerMetrics.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.routerMetrics.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.routerMetrics.schedulerName }}
+      schedulerName: "{{ .Values.routerMetrics.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.routerMetrics.priorityClassName }}
+      priorityClassName: "{{ .Values.routerMetrics.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.routerMetrics.name }}
+          image: "{{ .Values.routerMetrics.image.repository }}:{{ .Values.routerMetrics.image.tag }}"
+          imagePullPolicy: {{ .Values.routerMetrics.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.routerMetrics.name }}
+          - secretRef:
+              name: akkeris-system-iam
+          - secretRef:
+              name: akkeris-system-vault
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.routerMetrics.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.routerMetrics.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.routerMetrics.securityContext }}
+      securityContext:
+{{ toYaml .Values.routerMetrics.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.routerMetrics.tolerations }}
+      tolerations:
+{{ toYaml .Values.routerMetrics.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.routerMetrics.affinity }}
+      affinity:
+{{ toYaml .Values.routerMetrics.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

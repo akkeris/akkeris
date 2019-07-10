@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.appsWatcher.fullname" . }}
+  labels:
+{{ include "akkeris.appsWatcher.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.appsWatcher.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.appsWatcher.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.appsWatcher.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.appsWatcher.podAnnotations }}
+      annotations:
+{{ toYaml .Values.appsWatcher.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.appsWatcher.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.appsWatcher.schedulerName }}
+      schedulerName: "{{ .Values.appsWatcher.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.appsWatcher.priorityClassName }}
+      priorityClassName: "{{ .Values.appsWatcher.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.appsWatcher.name }}
+          image: "{{ .Values.appsWatcher.image.repository }}:{{ .Values.appsWatcher.image.tag }}"
+          imagePullPolicy: {{ .Values.appsWatcher.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.appsWatcher.name }}
+          - secretRef:
+            name: akkeris-system-vault
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.appsWatcher.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.appsWatcher.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.appsWatcher.securityContext }}
+      securityContext:
+{{ toYaml .Values.appsWatcher.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.appsWatcher.tolerations }}
+      tolerations:
+{{ toYaml .Values.appsWatcher.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.appsWatcher.affinity }}
+      affinity:
+{{ toYaml .Values.appsWatcher.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

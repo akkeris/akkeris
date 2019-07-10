@@ -2,59 +2,47 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 1
-
 serviceAccounts:
   akkeris:
     create: "true"
     name: akkeris
 
-regionApi:
-  ## region-api container name
-  ##
-  name: region-api
+aws:
+  accessKeyID:
+  secretAccessKey:
+  region: us-west-2
 
-  ## region-api container image
+vault:
+  address: vault.akkeris-system.svc.cluster.local
+  token:
+
+kubernetes:
+  api: kubernetes.default.svc.cluster.local
+
+appsWatcher:
+  ## apps-watcher container name
+  ##
+  name: apps-watcher
+
+  ## apps-watcher container image
   ##
   image:
-    repository: akkeris/region-api
-    tag: release-38
+    repository: akkeris/apps-watcher
+    tag: release-12
     pullPolicy: IfNotPresent
 
-  ## region-api priorityClassName
+  ## apps-watcher priorityClassName
   ##
   priorityClassName: ""
   
-  ingress:
-    ## If true, region-api Ingress will be created
-    ##
-    enabled: false
-
-    ## region-api Ingress annotations
-    ##
-    annotations: {}
-    #   kubernetes.io/ingress.class: nginx
-    #   kubernetes.io/tls-acme: 'true'
-
-    ## region-api Ingress hostnames with optional path
-    ## Must be provided if Ingress is enabled
-    ##
-    hosts: []
-    #  - region-api.domain.com
-
-    tls: []
-    #  - secretName: region-api-tls
-    #    hosts:
-    #      - region-api.domain.com
-
-  ## region-api Deployment Strategy type
+  ## apps-watcher Deployment Strategy type
   strategy:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 1
     type: RollingUpdate
 
-  ## Node tolerations for region-api scheduling to nodes with taints
+  ## Node tolerations for apps-watcher scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   ##
   tolerations: []
@@ -63,7 +51,7 @@ regionApi:
     #   value: "value"
     #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
 
-  ## Node labels for region-api pod assignment
+  ## Node labels for apps-watcher pod assignment
   ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
@@ -77,13 +65,13 @@ regionApi:
   ##
   # schedulerName:
 
-  ## Annotations to be added to region-api pods
+  ## Annotations to be added to apps-watcher pods
   ##
   podAnnotations: {}
   
   replicaCount: 1
 
-  ## region-api resource requests and limits
+  ## apps-watcher resource requests and limits
   ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
   resources: {}
@@ -94,130 +82,10 @@ regionApi:
     #   cpu: 10m
     #   memory: 32Mi
 
-  ## Security context to be added to region-api pods
+  ## Security context to be added to apps-watcher pods
   ##
   securityContext: {}
 
-  service:
-    annotations: {}
-    labels: {}
-    clusterIP: ""
-
-    ## List of IP addresses at which the region-api service is available
-    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
-    ##
-    externalIPs: []
-
-    servicePort: 80
-    # nodePort: 30000
-    type: nodePort
-  
-  configmap:
-    data:
-
-logsession:
-  ## logsession container name
-  ##
-  name: logsession
-
-  ## logsession container image
-  ##
-  image:
-    repository: akkeris/logsession
-    tag: release-38
-    pullPolicy: IfNotPresent
-
-  ## logsession priorityClassName
-  ##
-  priorityClassName: ""
-  
-  ingress:
-    ## If true, logsession Ingress will be created
-    ##
-    enabled: false
-
-    ## logsession Ingress annotations
-    ##
-    annotations: {}
-    #   kubernetes.io/ingress.class: nginx
-    #   kubernetes.io/tls-acme: 'true'
-
-    ## logsession Ingress hostnames with optional path
-    ## Must be provided if Ingress is enabled
-    ##
-    hosts: []
-    #  - logsession.domain.com
-
-    tls: []
-    #  - secretName: logsession-tls
-    #    hosts:
-    #      - logsession.domain.com
-
-  ## logsession Deployment Strategy type
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
-
-  ## Node tolerations for logsession scheduling to nodes with taints
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-  ##
-  tolerations: []
-    # - key: "key"
-    #   operator: "Equal|Exists"
-    #   value: "value"
-    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
-
-  ## Node labels for logsession pod assignment
-  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-
-  ## Pod affinity
-  ##
-  affinity: {}
-
-  ## Use an alternate scheduler, e.g. "stork".
-  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
-  ##
-  # schedulerName:
-
-  ## Annotations to be added to logsession pods
-  ##
-  podAnnotations: {}
-  
-  replicaCount: 1
-
-  ## logsession resource requests and limits
-  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  ##
-  resources: {}
-    # limits:
-    #   cpu: 10m
-    #   memory: 32Mi
-    # requests:
-    #   cpu: 10m
-    #   memory: 32Mi
-
-  ## Security context to be added to logsession pods
-  ##
-  securityContext: {}
-
-  service:
-    annotations: {}
-    labels: {}
-    clusterIP: ""
-
-    ## List of IP addresses at which the logsession service is available
-    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
-    ##
-    externalIPs: []
-
-    servicePort: 80
-    # nodePort: 30000
-    type: nodePort
-  
   configmap:
     data:
 
@@ -237,10 +105,9 @@ buildshuttle:
   ## For instance to add a http_proxy
   ##
   extraEnv: 
-    - DEBUG: buildshuttle,buildshuttle-worker
-    - PORT: 9000
-    - MAXIMUM_PARALLEL_BUILDS: 4
-    - DOCKER_BUILD_SETTINGS: {}
+    DEBUG: buildshuttle,buildshuttle-worker
+    MAXIMUM_PARALLEL_BUILDS: 4
+    DOCKER_BUILD_SETTINGS:
 
   ## buildshuttle priorityClassName
   ##
@@ -581,6 +448,207 @@ elasticacheBroker:
   configmap:
     data:
 
+elasticsearchBroker:
+  enabled: true
+  ## elasticsearch-broker container name
+  ##
+  name: elasticsearch-broker
+
+  ## elasticsearch-broker container image
+  ##
+  image:
+    repository: akkeris/elasticsearch-broker
+    tag: release-2
+    pullPolicy: IfNotPresent
+  
+  worker:
+    name: elasticsearch-broker-worker
+    resources: {}
+      # limits:
+      #   cpu: 10m
+      #   memory: 32Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 32Mi
+
+  ## elasticsearch-broker priorityClassName
+  ##
+  priorityClassName: ""
+
+  ## elasticsearch-broker Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for elasticsearch-broker scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for elasticsearch-broker pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to elasticsearch-broker pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## elasticsearch-broker resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to elasticsearch-broker pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the elasticsearch-broker service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+  configmap:
+    data:
+
+logsession:
+  ## logsession container name
+  ##
+  name: logsession
+
+  ## logsession container image
+  ##
+  image:
+    repository: akkeris/logsession
+    tag: release-38
+    pullPolicy: IfNotPresent
+
+  ## logsession priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, logsession Ingress will be created
+    ##
+    enabled: false
+
+    ## logsession Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## logsession Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - logsession.domain.com
+
+    tls: []
+    #  - secretName: logsession-tls
+    #    hosts:
+    #      - logsession.domain.com
+
+  ## logsession Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for logsession scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for logsession pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to logsession pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## logsession resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to logsession pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the logsession service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+  
+  configmap:
+    data:
+
 logshuttle:
   ## logshuttle container name
   ##
@@ -683,6 +751,336 @@ logshuttle:
     servicePort: 80
     # nodePort: 30000
     type: nodePort
+
+  configmap:
+    data:
+
+metricsSample:
+  ## metrics-sample container name
+  ##
+  name: metrics-sample
+
+  ## metrics-sample container image
+  ##
+  image:
+    repository: akkeris/metrics-sample
+    tag: release-3
+    pullPolicy: IfNotPresent
+
+  ## metrics-sample priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ## metrics-sample Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for metrics-sample scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for metrics-sample pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to metrics-sample pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## metrics-sample resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to metrics-sample pods
+  ##
+  securityContext: {}
+
+  configmap:
+    data:
+
+metricsSyslogCollector:
+  ## metrics-syslog-collector container name
+  ##
+  name: metrics-syslog-collector
+
+  ## metrics-syslog-collector container image
+  ##
+  image:
+    repository: akkeris/metrics-syslog-collector
+    tag: pre-release-2
+    pullPolicy: IfNotPresent
+
+  ## metrics-syslog-collector priorityClassName
+  ##
+  priorityClassName: ""
+
+  ## metrics-syslog-collector Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for metrics-syslog-collector scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for metrics-syslog-collector pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to metrics-syslog-collector pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## metrics-syslog-collector resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to metrics-syslog-collector pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the logsession service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+
+  configmap:
+    data:
+
+regionApi:
+  ## region-api container name
+  ##
+  name: region-api
+
+  ## region-api container image
+  ##
+  image:
+    repository: akkeris/region-api
+    tag: release-38
+    pullPolicy: IfNotPresent
+
+  ## region-api priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ingress:
+    ## If true, region-api Ingress will be created
+    ##
+    enabled: false
+
+    ## region-api Ingress annotations
+    ##
+    annotations: {}
+    #   kubernetes.io/ingress.class: nginx
+    #   kubernetes.io/tls-acme: 'true'
+
+    ## region-api Ingress hostnames with optional path
+    ## Must be provided if Ingress is enabled
+    ##
+    hosts: []
+    #  - region-api.domain.com
+
+    tls: []
+    #  - secretName: region-api-tls
+    #    hosts:
+    #      - region-api.domain.com
+
+  ## region-api Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for region-api scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for region-api pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to region-api pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## region-api resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to region-api pods
+  ##
+  securityContext: {}
+
+  service:
+    annotations: {}
+    labels: {}
+    clusterIP: ""
+
+    ## List of IP addresses at which the region-api service is available
+    ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+    ##
+    externalIPs: []
+
+    servicePort: 80
+    # nodePort: 30000
+    type: nodePort
+  
+  configmap:
+    data:
+
+routerMetrics:
+  ## router-metrics container name
+  ##
+  name: router-metrics
+
+  ## router-metrics container image
+  ##
+  image:
+    repository: akkeris/router-metrics
+    tag: release-5
+    pullPolicy: IfNotPresent
+
+  ## router-metrics priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ## router-metrics Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for router-metrics scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for router-metrics pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to router-metrics pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## router-metrics resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to router-metrics pods
+  ##
+  securityContext: {}
 
   configmap:
     data:
@@ -800,6 +1198,76 @@ s3Broker:
     servicePort: 80
     # nodePort: 30000
     type: nodePort
+
+  configmap:
+    data:
+
+serviceWatcherIstio:
+  ## service-watcher-istio container name
+  ##
+  name: service-watcher-istio
+
+  ## service-watcher-istio container image
+  ##
+  image:
+    repository: akkeris/service-watcher-istio
+    tag: release-12
+    pullPolicy: IfNotPresent
+
+  ## service-watcher-istio priorityClassName
+  ##
+  priorityClassName: ""
+  
+  ## service-watcher-istio Deployment Strategy type
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+
+  ## Node tolerations for service-watcher-istio scheduling to nodes with taints
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+  ##
+  tolerations: []
+    # - key: "key"
+    #   operator: "Equal|Exists"
+    #   value: "value"
+    #   effect: "NoSchedule|PreferNoSchedule|NoExecute(1.6 only)"
+
+  ## Node labels for service-watcher-istio pod assignment
+  ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+
+  ## Pod affinity
+  ##
+  affinity: {}
+
+  ## Use an alternate scheduler, e.g. "stork".
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  # schedulerName:
+
+  ## Annotations to be added to service-watcher-istio pods
+  ##
+  podAnnotations: {}
+  
+  replicaCount: 1
+
+  ## service-watcher-istio resource requests and limits
+  ## Ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources: {}
+    # limits:
+    #   cpu: 10m
+    #   memory: 32Mi
+    # requests:
+    #   cpu: 10m
+    #   memory: 32Mi
+
+  ## Security context to be added to service-watcher-istio pods
+  ##
+  securityContext: {}
 
   configmap:
     data:

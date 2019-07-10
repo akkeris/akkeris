@@ -6,7 +6,6 @@ Expand the name of the chart.
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-
 {{/*
 Create unified labels for akkeris components
 */}}
@@ -20,13 +19,13 @@ chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 heritage: {{ .Release.Service }}
 {{- end -}}
 
-{{- define "akkeris.regionApi.labels" -}}
-{{ include "akkeris.regionApi.matchLabels" . }}
+{{- define "akkeris.appsWatcher.labels" -}}
+{{ include "akkeris.appsWatcher.matchLabels" . }}
 {{ include "akkeris.common.metaLabels" . }}
 {{- end -}}
 
-{{- define "akkeris.regionApi.matchLabels" -}}
-component: {{ .Values.regionApi.name | quote }}
+{{- define "akkeris.appsWatcher.matchLabels" -}}
+component: {{ .Values.appsWatcher.name | quote }}
 {{ include "akkeris.common.matchLabels" . }}
 {{- end -}}
 
@@ -60,6 +59,16 @@ component: {{ .Values.elasticacheBroker.name | quote }}
 {{ include "akkeris.common.matchLabels" . }}
 {{- end -}}
 
+{{- define "akkeris.elasticsearchBroker.labels" -}}
+{{ include "akkeris.elasticsearchBroker.matchLabels" . }}
+{{ include "akkeris.common.metaLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.elasticsearchBroker.matchLabels" -}}
+component: {{ .Values.elasticsearchBroker.name | quote }}
+{{ include "akkeris.common.matchLabels" . }}
+{{- end -}}
+
 {{- define "akkeris.logsession.labels" -}}
 {{ include "akkeris.logsession.matchLabels" . }}
 {{ include "akkeris.common.metaLabels" . }}
@@ -80,6 +89,46 @@ component: {{ .Values.logshuttle.name | quote }}
 {{ include "akkeris.common.matchLabels" . }}
 {{- end -}}
 
+{{- define "akkeris.metricsSample.labels" -}}
+{{ include "akkeris.metricsSample.matchLabels" . }}
+{{ include "akkeris.common.metaLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.metricsSample.matchLabels" -}}
+component: {{ .Values.metricsSample.name | quote }}
+{{ include "akkeris.common.matchLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.metricsSyslogCollector.labels" -}}
+{{ include "akkeris.metricsSyslogCollector.matchLabels" . }}
+{{ include "akkeris.common.metaLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.metricsSyslogCollector.matchLabels" -}}
+component: {{ .Values.metricsSyslogCollector.name | quote }}
+{{ include "akkeris.common.matchLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.regionApi.labels" -}}
+{{ include "akkeris.regionApi.matchLabels" . }}
+{{ include "akkeris.common.metaLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.regionApi.matchLabels" -}}
+component: {{ .Values.regionApi.name | quote }}
+{{ include "akkeris.common.matchLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.routerMetrics.labels" -}}
+{{ include "akkeris.routerMetrics.matchLabels" . }}
+{{ include "akkeris.common.metaLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.routerMetrics.matchLabels" -}}
+component: {{ .Values.routerMetrics.name | quote }}
+{{ include "akkeris.common.matchLabels" . }}
+{{- end -}}
+
 {{- define "akkeris.s3Broker.labels" -}}
 {{ include "akkeris.s3Broker.matchLabels" . }}
 {{ include "akkeris.common.metaLabels" . }}
@@ -87,6 +136,16 @@ component: {{ .Values.logshuttle.name | quote }}
 
 {{- define "akkeris.s3Broker.matchLabels" -}}
 component: {{ .Values.s3Broker.name | quote }}
+{{ include "akkeris.common.matchLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.serviceWatcherIstio.labels" -}}
+{{ include "akkeris.serviceWatcherIstio.matchLabels" . }}
+{{ include "akkeris.common.metaLabels" . }}
+{{- end -}}
+
+{{- define "akkeris.serviceWatcherIstio.matchLabels" -}}
+component: {{ .Values.serviceWatcherIstio.name | quote }}
 {{ include "akkeris.common.matchLabels" . }}
 {{- end -}}
 
@@ -120,19 +179,19 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
-Create a fully qualified region-api name.
+Create a fully qualified apps-watcher name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 
-{{- define "akkeris.regionApi.fullname" -}}
-{{- if .Values.regionApi.fullnameOverride -}}
-{{- .Values.regionApi.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- define "akkeris.appsWatcher.fullname" -}}
+{{- if .Values.appsWatcher.fullnameOverride -}}
+{{- .Values.appsWatcher.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
-{{- printf "%s-%s" .Release.Name .Values.regionApi.name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s" .Release.Name .Values.appsWatcher.name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s-%s" .Release.Name $name .Values.regionApi.name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.appsWatcher.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -192,6 +251,24 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create a fully qualified elasticsearch-broker name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+
+{{- define "akkeris.elasticsearchBroker.fullname" -}}
+{{- if .Values.elasticsearchBroker.fullnameOverride -}}
+{{- .Values.elasticsearchBroker.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- printf "%s-%s" .Release.Name .Values.elasticsearchBroker.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.elasticsearchBroker.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create a fully qualified logsession name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
@@ -228,6 +305,78 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create a fully qualified metrics-sample name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+
+{{- define "akkeris.metricsSample.fullname" -}}
+{{- if .Values.metricsSample.fullnameOverride -}}
+{{- .Values.metricsSample.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- printf "%s-%s" .Release.Name .Values.metricsSample.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.metricsSample.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create a fully qualified metrics-syslog-collector name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+
+{{- define "akkeris.metricsSyslogCollector.fullname" -}}
+{{- if .Values.metricsSyslogCollector.fullnameOverride -}}
+{{- .Values.metricsSyslogCollector.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- printf "%s-%s" .Release.Name .Values.metricsSyslogCollector.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.metricsSyslogCollector.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create a fully qualified region-api name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+
+{{- define "akkeris.regionApi.fullname" -}}
+{{- if .Values.regionApi.fullnameOverride -}}
+{{- .Values.regionApi.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- printf "%s-%s" .Release.Name .Values.regionApi.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.regionApi.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create a fully qualified router-metrics name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+
+{{- define "akkeris.routerMetrics.fullname" -}}
+{{- if .Values.routerMetrics.fullnameOverride -}}
+{{- .Values.routerMetrics.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- printf "%s-%s" .Release.Name .Values.routerMetrics.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.routerMetrics.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create a fully qualified s3-broker name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
@@ -241,6 +390,24 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "%s-%s" .Release.Name .Values.s3Broker.name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- printf "%s-%s-%s" .Release.Name $name .Values.s3Broker.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create a fully qualified service-watcher-istio name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+
+{{- define "akkeris.serviceWatcherIstio.fullname" -}}
+{{- if .Values.serviceWatcherIstio.fullnameOverride -}}
+{{- .Values.serviceWatcherIstio.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- printf "%s-%s" .Release.Name .Values.serviceWatcherIstio.name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s-%s" .Release.Name $name .Values.serviceWatcherIstio.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

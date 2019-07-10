@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "akkeris.metricsSample.fullname" . }}
+  labels:
+{{ include "akkeris.metricsSample.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.metricsSample.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "akkeris.metricsSample.matchLabels" . | nindent 6 }}
+  strategy:
+{{ toYaml .Values.metricsSample.strategy | indent 4 }}
+  template:
+    metadata:
+    {{- if .Values.metricsSample.podAnnotations }}
+      annotations:
+{{ toYaml .Values.metricsSample.podAnnotations | indent 8 }}
+    {{- end }}
+      labels:
+        {{- include "akkeris.metricsSample.labels" . | nindent 8 }}
+    spec:
+{{- if .Values.metricsSample.schedulerName }}
+      schedulerName: "{{ .Values.metricsSample.schedulerName }}"
+{{- end }}
+      serviceAccountName: {{ template "akkeris.serviceAccountName.akkeris" . }}
+{{- if .Values.metricsSample.priorityClassName }}
+      priorityClassName: "{{ .Values.metricsSample.priorityClassName }}"
+{{- end }}
+      revisionHistoryLimit: 10
+      containers:
+        - name: {{ template "akkeris.name" . }}-{{ .Values.metricsSample.name }}
+          image: "{{ .Values.metricsSample.image.repository }}:{{ .Values.metricsSample.image.tag }}"
+          imagePullPolicy: {{ .Values.metricsSample.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ .Values.metricsSample.name }}
+          - secretRef:
+              name: akkeris-system-iam
+          - secretRef:
+              name: akkeris-system-vault
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- if .Values.imagePullSecrets }} 
+      imagePullSecrets:
+      {{ toYaml .Values.imagePullSecrets | indent 2 }}
+    {{- end }}
+    {{- if .Values.metricsSample.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.metricsSample.nodeSelector | indent 8 }}
+    {{- end }}
+    {{- if .Values.metricsSample.securityContext }}
+      securityContext:
+{{ toYaml .Values.metricsSample.securityContext | indent 8 }}
+    {{- end }}
+    {{- if .Values.metricsSample.tolerations }}
+      tolerations:
+{{ toYaml .Values.metricsSample.tolerations | indent 8 }}
+    {{- end }}
+    {{- if .Values.metricsSample.affinity }}
+      affinity:
+{{ toYaml .Values.metricsSample.affinity | indent 8 }}
+    {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

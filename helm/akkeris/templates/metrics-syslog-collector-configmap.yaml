@@ -1,0 +1,11 @@
+# This is a simple example of using a config map to create a single page static site.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    {{- include "akkeris.metricsSyslogCollector.labels" . | nindent 4 }}
+  name: {{ template "akkeris.metricsSyslogCollector.fullname" . }}
+{{- with .Values.metricsSyslogCollector.configmap.data }}
+data:
+  {{- toYaml . | nindent 2 }}
+{{- end }}

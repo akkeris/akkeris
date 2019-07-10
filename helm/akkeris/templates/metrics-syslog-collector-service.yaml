@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.metricsSyslogCollector.service.annotations }}
+  annotations:
+{{ toYaml .Values.metricsSyslogCollector.service.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{- include "akkeris.metricsSyslogCollector.labels" . | nindent 4 }}
+{{- if .Values.metricsSyslogCollector.service.labels }}
+{{ toYaml .Values.metricsSyslogCollector.service.labels | indent 4 }}
+{{- end }}
+  name: {{ template "akkeris.metricsSyslogCollector.fullname" . }}
+
+spec:
+{{- if .Values.metricsSyslogCollector.service.clusterIP }}
+  clusterIP: {{ .Values.metricsSyslogCollector.service.clusterIP }}
+{{- end }}
+{{- if .Values.metricsSyslogCollector.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.metricsSyslogCollector.service.externalIPs | indent 4 }}
+{{- end }}
+  type: {{ .Values.metricsSyslogCollector.service.type }}
+  ports:
+    - port: {{ .Values.metricsSyslogCollector.service.servicePort }}
+      targetPort: 3600
+      protocol: TCP
+      name: http
+    {{- if .Values.metricsSyslogCollector.service.nodePort }}
+      nodePort: {{ .Values.metricsSyslogCollector.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "akkeris.metricsSyslogCollector.matchLabels" . | nindent 4 }}
+  type: "{{ .Values.metricsSyslogCollector.service.type }}"

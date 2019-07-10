@@ -36,10 +36,8 @@ spec:
           envFrom:
           - configMapRef:
               name: {{ .Values.databaseBroker.name }}
-          {{- range .Values.databaseBroker.secrets }}
           - secretRef:
-              name: {{ . }}
-          {{- end }}
+              name: akkeris-system-iam
           - command:
             - ./servicebroker
             - -logtostderr=1
@@ -56,10 +54,8 @@ spec:
           envFrom:
           - configMapRef:
               name: {{ .Values.databaseBroker.name }}
-          {{- range .Values.databaseBroker.secrets }}
           - secretRef:
-              name: {{ . }}
-          {{- end }}
+              name: akkeris-system-iam
           command:
             - ./servicebroker
             - -logtostderr=1
