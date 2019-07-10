@@ -318,5 +318,4 @@ $ helm install stable/akkeris --name my-release -f values.yaml
 
 There are some required values and permissions required for Akkeris to work with your cloud provider and it's brokers.
 
-
 ## Istio Configuration

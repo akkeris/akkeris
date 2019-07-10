@@ -9,6 +9,8 @@ serviceAccounts:
     create: "true"
     name: akkeris
 
+## TODO
+## Conglomorate common env vars here and add to templates
 aws:
   accessKeyID:
   secretAccessKey:
