@@ -11,6 +11,13 @@ aws:
   accessKeyID:
   secretAccessKey:
   region: us-west-2
+  securityGroups:
+  accountID:
+  kmsKeyID:
+  subnetID: []
+
+akkeris:
+  prefix: akkeris
 
 vault:
   address: vault.akkeris-system.svc.cluster.local
@@ -88,6 +95,9 @@ appsWatcher:
 
   configmap:
     data:
+      KUBERNETES_API_SERVER: kubernetes.default.svc.cluster.local
+      KUBERNETES_API_VERSION: v1
+      KUBERNETES_TOKEN_SECRET: 
 
 buildshuttle:
   ## buildshuttle container name
@@ -108,6 +118,7 @@ buildshuttle:
     DEBUG: buildshuttle,buildshuttle-worker
     MAXIMUM_PARALLEL_BUILDS: 4
     DOCKER_BUILD_SETTINGS:
+    USE_KUBERNETES: true
 
   ## buildshuttle priorityClassName
   ##
@@ -213,6 +224,11 @@ buildshuttle:
 
   configmap:
     data:
+      S3_ACCESS_KEY:
+      S3_BUCKET:
+      S3_LOCATION:
+      S3_REGION: us-west-2
+      S3_SECRET_KEY:
 
 databaseBroker:
   enabled: true
@@ -330,6 +346,11 @@ databaseBroker:
 
   configmap:
     data:
+      AWS_VPC_SECURITY_GROUPS:
+      DATABASE_URL:
+      NAME_PREFIX: akkeris
+      PG_HOBBY_9_URI:
+      PG_HOBBY_10_URI:
 
 elasticacheBroker:
   enabled: true
@@ -447,6 +468,10 @@ elasticacheBroker:
 
   configmap:
     data:
+      DATABASE_URL:
+      MEMCACHED_SUBNET_GROUP: memcached-subnet-group
+      NAME_PREFIX: akkeris
+      REDIS_SUBNET_GROUP: redis_subnet_group
 
 elasticsearchBroker:
   enabled: true
@@ -542,6 +567,10 @@ elasticsearchBroker:
 
   configmap:
     data:
+      AWS_ACCOUNT_ID:
+      AWS_KMS_KEY_ID:
+      AWS_SUBNET_ID:
+      DATABASE_URL:
 
 logsession:
   ## logsession container name
@@ -648,6 +677,12 @@ logsession:
   
   configmap:
     data:
+      AUTH_KEY:
+      KAFKA_HOSTS:
+      POSTGRES_URL:
+      RUN_SESSION: 1
+      SESSION_URL:
+      SYSLOG:
 
 logshuttle:
   ## logshuttle container name
@@ -754,6 +789,10 @@ logshuttle:
 
   configmap:
     data:
+      AUTH_KEY:
+      KAFKA_HOSTS:
+      POSTGS_URL:
+      SYSLOG:
 
 metricsSample:
   ## metrics-sample container name
@@ -824,6 +863,11 @@ metricsSample:
 
   configmap:
     data:
+      ALAMO_API_URL:
+      DELAY_MINUTES: "9"
+      KAFKA_BROKERS:
+      PROFILE: false
+      PROMETHEUS_URL: prometheus-server.prometheus.svc.cluster.local
 
 metricsSyslogCollector:
   ## metrics-syslog-collector container name
@@ -908,6 +952,7 @@ metricsSyslogCollector:
 
   configmap:
     data:
+      OPENTSDB_IP:
 
 regionApi:
   ## region-api container name
@@ -1014,6 +1059,65 @@ regionApi:
   
   configmap:
     data:
+      ALAMO_API_AUTH_SECRET: 
+      ALAMO_INTERNAL_URL_TEMPLATE: 
+      ALAMO_URL_TEMPLATE: 
+      APPS_PRIVATE_INTERNAL: 
+      APPS_PUBLIC_EXTERNAL: 
+      APPS_PUBLIC_INTERNAL: 
+      CASSANDRA_BROKER_URL: cassandra-api.akkeris-system.svc.cluster.local
+      CERT_COUNTRY: US
+      CERT_EMAIL: 
+      CERT_LOCALITY: 
+      CERT_ORG: 
+      CERT_ORG_UNIT: 
+      CERT_PROVINCE: 
+      CERT_VALIDITY_YEARS: "2"
+      DEFAULT_TRANSITION_INGRESS:
+      DIGICERT_REQUEST_URL: 
+      DIGICERT_SECRET: 
+      DIGICERT_URL: https://www.digicert.com/services/v2
+      DOMAIN_NAME: 
+      ENABLE_AUTH: "false"
+      ES_BROKER_URL: elasticsearch-api.akkeris-system.svc.cluster.local
+      EXTERNAL_DOMAIN: 
+      F5_SECRET: 
+      F5_UNIPOOL: 
+      F5_URL: 
+      FEATURE_DEFAULT_OCTHC: "false"
+      FEATURE_DEFAULT_OPSGENIE: "false"
+      IMAGE_PULL_SECRET: 
+      INFLUXDB_BROKER_URL: influx-api.akkeris-system.svc.cluster.local
+      INFLUXDB_URL: 
+      INGRESS_DEBUG: "true"
+      INTERNAL_DOMAIN: 
+      ISTIO_DOWNPAGE: akkeris404.default.svc.cluster.local
+      KAFKA_BROKER_URL: http://kafka-api.akkeris-system.svc.cluster.local
+      KAFKA_BROKERS: 
+      LOGSHUTTLE_APP: logshuttle
+      LOGSHUTTLE_RESTART: "false"
+      LOGSHUTTLE_SPACE: default
+      MARTINI_ENV: Prod
+      MEMCACHED_BROKER_URL: memcached-api.akkeris-system.svc.cluster.local
+      MONGODB_BROKER_URL: mongodb-api.akkeris-system.svc.cluster.local
+      NAGIOS_ADDRESS: 
+      NEPTUNE_BROKER_URL: neptune-api.akkeris-system.svc.cluster.local
+      PITDB: 
+      PORT: "3600"
+      PROMETHEUS_URL: http://prometheus-server.prometheus
+      RABBITMQ_BROKER_URL: rabbitmq-api.akkeris-system.svc.cluster.local
+      REDIS_BROKER_URL: redis-api.akkeris-system.svc.cluster.local
+      REVISION_HISTORY_LIMIT: "10"
+      S3_BROKER_URL: s3-api.akkeris-system.svc.cluster.local
+      SECRETS: 
+      SERVICES: http://database-broker-api.akkeris-system,http://elasticache-broker-api.akkeris-system,http://s3-broker-api.akkeris-system,http://elasticsearch-broker-api.akkeris-system
+      SITES_PRIVATE_INTERNAL: 
+      SITES_PUBLIC_EXTERNAL: 
+      SITES_PUBLIC_INTERNAL: 
+      SSLPROFILEPARENT: /Common/clientssl_secured_V2
+      SUBSCRIPTION_URL: 
+      VAULT_CERT_STORAGE: secret/tmp/
+      VAULT_PREFIX: vault
 
 routerMetrics:
   ## router-metrics container name
@@ -1084,6 +1188,12 @@ routerMetrics:
 
   configmap:
     data:
+      CONSUMER_GROUP_NAME: router-metrics
+      DEBUG_NO_SEND: false
+      DEBUT_OUTPUT: true
+      KAFKA_BROKERS:
+      OPENTSDB_IP:
+      SEND_FWD_TLSVERSION: true
 
 s3Broker:
   enabled: true
@@ -1201,6 +1311,7 @@ s3Broker:
 
   configmap:
     data:
+      DATABASE_URL:
 
 serviceWatcherIstio:
   ## service-watcher-istio container name
@@ -1271,6 +1382,14 @@ serviceWatcherIstio:
 
   configmap:
     data:
+      CLUSTER: akkeris
+      DEFAULT_DOMAIN:
+      INSIDE_DOMAIN:
+      KUBERNETES_API_SERVER: kubernetes.default.svc.cluster.local
+      KUBERNETES_TOKEN_VAULT_PATH:
+      NAMESPACE_BLACKLIST: kube-system,kube-public,quay-enterprise,subsystems,brokers,testcafe,akkeris-system,istio-system,nginx-ingress-i,prometheus,sites-system,velero
+      REGIONAPI_SECRET:
+      REGIONAPI_URL: http://region-api.akkeris-system
 
 taas:
   ## taas container name
@@ -1377,3 +1496,32 @@ taas:
 
   configmap:
     data:
+      AKKERIS_API_URL: http://region-api.akkeris-system.svc.cluster.local
+      APP_CONTROLLER_AUTH_SECRET: 
+      APP_CONTROLLER_URL: http://api.default.svc.cluster.local
+      ARTIFACTS_URL:
+      AUTH_HOST: 
+      AWS_S3_BUCKET: 
+      DEFAULT_ORG:
+      DEFAULT_START_DELAY: "15"
+      DIAGNOSTICDB:
+      DIRECTORY_LISTINGS: "true"
+      DIRECTORY_LISTINGS_FORMAT: html
+      ENABLE_SLACK_NOTIFICATIONS: "true"
+      ES_URL: 
+      GITHUB_TOKEN_SECRET: 
+      KIBANA_URL: 
+      KUBERNETES_API_SERVER: kubernetes.default
+      KUBERNETES_API_VERSION: v1
+      KUBERNETES_CLIENT_TYPE: token
+      KUBERNETES_TOKEN_SECRET: 
+      LOG_TIMESTAMPS_LOCALE: 
+      LOG_URL: 
+      PITDB: 
+      PORT: "4000"
+      POSTBACKURL: 
+      RERUN_URL: 
+      SLACK_NOTIFICATION_CHANNEL: 
+      SLACK_NOTIFICATION_URL: 
+      STRIP_PATH: /v1/artifacts
+      TAAS_SVC_URL: http://taas.akkeris-system.svc.cluster.localA
