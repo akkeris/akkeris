@@ -15,6 +15,9 @@ This chart bootstraps an [Akkeris](https://beta.akkeris.io/#) deployment on a Ku
 ## Prerequisites
 
 * Kubernetes 1.6+ with Beta APIs enabled
+* Postgres Database Server
+* S3 bucket or compatible storage driver
+* Istio & Certmanager
 
 ## Installing the Chart
 
@@ -308,6 +311,9 @@ $ helm install stable/akkeris --name my-release -f values.yaml
 
 ## RBAC Configuration
 
-## ConfigmMap Files
+## Configmap Values
+
+There are some required values and permissions required for Akkeris to work with your cloud provider and it's brokers.
+
 
 ## Istio Configuration
