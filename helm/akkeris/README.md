@@ -45,6 +45,7 @@ Parameter | Description | Default
 `aws.accessKeyID` | aws user/role access key | `null`
 `aws.secretAccessKey` | aws user/role secret key | `null`
 `aws.region` | region aws vpc is located | `us-west-2`
+`rbac.create` | If true, create & use RBAC resources | `true`
 `appsWatcher.name` | apps-watcher container name | `apps-watcher`
 `appsWatcher.image.repository` | apps-watcher container image repository | `akkeris/apps-watcher`
 `appsWatcher.image.tag` | apps-watcher container image tag | `release-12`
@@ -258,6 +259,8 @@ Parameter | Description | Default
 `s3Broker.service.clusterIP` | internal s3-broker cluster service IP | `""`
 `s3Broker.service.servicePort` | s3-broker service port | `80`
 `s3Broker.service.type` | type of s3-broker service to create | `NodePort`
+`serviceAccounts.akkeris.create` | If true, create the akkeris service account | `true`
+`serviceAccounts.akkeris.name` | name of the akkeris service account to use or create | `akkeris`
 `serviceWatcherIstio.name` | service-watcher-istio container name | `service-watcher-istio`
 `serviceWatcherIstio.image.repository` | service-watcher-istio container image repository | `akkeris/service-watcher-istio`
 `serviceWatcherIstio.image.tag` | service-watcher-istio container image tag | `release-12`
