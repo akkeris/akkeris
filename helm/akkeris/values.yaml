@@ -97,7 +97,8 @@ appsWatcher:
     data:
       KUBERNETES_API_SERVER: kubernetes.default.svc.cluster.local
       KUBERNETES_API_VERSION: v1
-      KUBERNETES_TOKEN_SECRET: 
+      KUBERNETES_TOKEN_SECRET:
+      NOTIFY:
 
 buildshuttle:
   ## buildshuttle container name
@@ -346,6 +347,7 @@ databaseBroker:
 
   configmap:
     data:
+      AWS_REGION: us-west-2
       AWS_VPC_SECURITY_GROUPS:
       DATABASE_URL:
       NAME_PREFIX: akkeris
@@ -468,6 +470,9 @@ elasticacheBroker:
 
   configmap:
     data:
+      AWS_REGION: us-west-2
+      AWS_VPC_SECURITY_GROUPS:
+      ELASTICACHE_SECURITY_GROUP:
       DATABASE_URL:
       MEMCACHED_SUBNET_GROUP: memcached-subnet-group
       NAME_PREFIX: akkeris
@@ -570,7 +575,9 @@ elasticsearchBroker:
       AWS_ACCOUNT_ID:
       AWS_KMS_KEY_ID:
       AWS_SUBNET_ID:
+      AWS_SECURITY_GROUP_ID:
       DATABASE_URL:
+      NAME_PREFIX: akkeris
 
 logsession:
   ## logsession container name
