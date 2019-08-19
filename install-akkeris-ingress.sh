@@ -1,4 +1,6 @@
 #!/bin/sh
+kubectl create namespace akkeris-system
+kubectl label namespace akkeris-system istio-injection=disabled
 kubectl create namespace sites-system 
 kubectl label namespace kube-system istio-injection=disabled
 # Note: cert manager must be up and running before this can run.
@@ -55,4 +57,5 @@ helm install ./helm/akkeris-ingress-chart/ --name akkeris-ingress --namespace is
 	--set=kubernetesapiurl="$KUBERNETES_API_URL" \
 	--set=kubernetestokenvaultpath="$KUBERNETES_TOKEN_VAULT_PATH" \
 	--set=regionapisecretvaultpath="$REGION_API_SECRET_VAULT_PATH" \
-	--set=regionapiurl="$REGION_API_URL"
+	--set=regionapiurl="$REGION_API_URL" \
+	--wait --timeout 600

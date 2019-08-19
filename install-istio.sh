@@ -4,16 +4,18 @@ if [ "$ISTIO_VERSION" == "" ]; then
 fi
 
 kubectl label namespace kube-system istio-injection=disabled
+kubectl label namespace nginx-ingress-i istio-injection=disabled
 
 helm repo add istio.io "https://storage.googleapis.com/istio-release/releases/$ISTIO_VERSION/charts/"
 helm repo update
 
-helm install istio.io/istio-init --version "$ISTIO_VERSION" --namespace istio-system --name istio-init
+helm install istio.io/istio-init --version "$ISTIO_VERSION" --namespace istio-system --name istio-init --wait --timeout 600
 echo "Waiting for CRDs jobs to finish..."
 sleep 60
 
 if [ "$USE_NODE_PORT_INGRESS" == "" ]; then
 	helm install istio.io/istio \
+		--wait --timeout 600 \
 		--name istio \
 		-f "./helm/istio-$ISTIO_VERSION-values.yaml" \
 		--version "$ISTIO_VERSION" \
@@ -21,6 +23,7 @@ if [ "$USE_NODE_PORT_INGRESS" == "" ]; then
 else
 	echo "Installing node port ingress"
 	helm install istio.io/istio \
+		 --wait --timeout 600 \
 		-f "./helm/istio-$ISTIO_VERSION-values.yaml" \
 		--version "$ISTIO_VERSION" \
 		--namespace istio-system \
