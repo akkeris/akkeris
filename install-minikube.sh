@@ -25,3 +25,5 @@ export ISTIO_MINIMAL=true
 ./install-private-ingress.sh
 
 ./install-registry.sh
+
+./install-vault-dev-mode.sh
