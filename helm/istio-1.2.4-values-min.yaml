@@ -14,11 +14,8 @@ global:
     accessLogFile: "/dev/stdout"
     resources:
       requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 2000m
-        memory: 1024Mi
+        cpu: 10m
+        memory: 40Mi
 
   disablePolicyChecks: false
 
@@ -32,6 +29,10 @@ sidecarInjectorWebhook:
 
 pilot:
   traceSampling: 100.0
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
 
 galley:
   enabled: true
@@ -63,13 +64,13 @@ mixer:
       metricsExpiryDuration: 10m
  
 grafana:
-  enabled: true
+  enabled: false
 
 tracing:
-  enabled: true
+  enabled: false
 
 kiali:
-  enabled: true
+  enabled: false
   dashboard:
     jaegerURL: http://jaeger-query:16686
     grafanaURL: http://grafana:3000
@@ -80,7 +81,7 @@ gateways:
   sites-public-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 5
     resources:
       requests:
@@ -117,7 +118,7 @@ gateways:
   sites-private-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 5
     resources:
       requests:
@@ -155,7 +156,7 @@ gateways:
   apps-private-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 5
     resources:
       requests:
@@ -193,7 +194,7 @@ gateways:
   apps-public-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 5
     resources:
       requests:
