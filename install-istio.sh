@@ -1,11 +1,14 @@
-#!/bin/sh
+#!/bin/bash
+
 echo "Installing Istio"
-if [ "$ISTIO_VERSION" == "" ]; then
+if [ "$ISTIO_VERSION" == "" ]
+then
 	export ISTIO_VERSION="1.2.4"
 fi
 
 export ISTIO_SUFFIX=""
-if [ "$ISTIO_MINIMAL" == "true" ]; then
+if [ "$ISTIO_MINIMAL" == "true" ]
+then
 	export ISTIO_SUFFIX="-min"
 fi
 
@@ -21,7 +24,8 @@ helm install istio.io/istio-init --version "$ISTIO_VERSION" --namespace istio-sy
 echo "Waiting for CRDs jobs to finish..."
 sleep 90
 
-if [ "$USE_NODE_PORT_INGRESS" == "" ]; then
+if [ "$USE_NODE_PORT_INGRESS" == "" ] 
+then
 	helm install istio.io/istio \
 		--wait --timeout 600 \
 		--name istio \

@@ -29,6 +29,7 @@ sidecarInjectorWebhook:
 
 pilot:
   traceSampling: 100.0
+  autoscaleEnabled: false
   resources:
     requests:
       cpu: 500m
@@ -40,6 +41,7 @@ galley:
 mixer:
   policy:
     enabled: true
+    autoscaleEnabled: false
     resources:
       requests:
         cpu: 10m
@@ -50,6 +52,7 @@ mixer:
 
   telemetry:
     enabled: true
+    autoscaleEnabled: false
     resources:
       requests:
         cpu: 50m
@@ -60,7 +63,7 @@ mixer:
  
   adapters:
     prometheus:
-      enabled: true
+      enabled: false
       metricsExpiryDuration: 10m
  
 grafana:
