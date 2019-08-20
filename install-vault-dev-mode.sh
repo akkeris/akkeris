@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "*** DO NOT USE THIS IN PRODUCTIONN ***"
 echo "*** FOR TESTING ONLY ***"
@@ -23,6 +23,7 @@ metadata:
 type: Opaque
 EOF
 
-echo $secret > /tmp/vault-minikube-secret.yaml
+echo "$secret" > /tmp/vault-minikube-secret.yaml
+
 kubectl apply -f /tmp/vault-minikube-secret.yaml -n akkeris-system
 rm /tmp/vault-minikube-secret.yaml
