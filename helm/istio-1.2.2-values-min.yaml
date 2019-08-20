@@ -68,6 +68,9 @@ mixer:
  
 grafana:
   enabled: false
+ 
+prometheus:
+  enabled: false
 
 tracing:
   enabled: false
