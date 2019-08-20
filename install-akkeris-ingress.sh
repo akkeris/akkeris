@@ -3,7 +3,6 @@ kubectl create namespace akkeris-system
 kubectl label namespace akkeris-system istio-injection=disabled
 kubectl create namespace sites-system 
 kubectl label namespace kube-system istio-injection=disabled
-# Note: cert manager must be up and running before this can run.
 
 if [ "$KAFKA_BROKERS" == "" ]; then
 	export LOGGING_SETTINGS="logging.brokers=\"$KAFKA_BROKERS\""
