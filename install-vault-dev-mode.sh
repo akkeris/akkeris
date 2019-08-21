@@ -7,6 +7,7 @@ helm install --name=vault --namespace akkeris-system --set='server.dev.enabled=t
 kubectl logs vault-0 -n akkeris-system
 echo "Installing vault in dev mode... done"
 
+echo "Creating vault secret... "
 export VAULT_ADDR_IP=`kubectl get services -n akkeris-system vault -o jsonpath='{.spec.clusterIP}'`
 export VAULT_ADDR_B64=`echo -n "http://$VAULT_ADDR_IP:8200" | base64`
 export VAULT_TOKEN_B64=`echo -n "root" | base64`
@@ -27,3 +28,4 @@ echo "$secret" > /tmp/vault-minikube-secret.yaml
 
 kubectl apply -f /tmp/vault-minikube-secret.yaml -n akkeris-system
 rm /tmp/vault-minikube-secret.yaml
+echo "Creating vault secret... done"
