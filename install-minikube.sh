@@ -4,6 +4,10 @@ command -v minikube >/dev/null 2>&1 || { echo >&2 "minikube is required for this
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "kubectl is required for this to run"; exit 1; }
 command -v helm >/dev/null 2>&1 || { echo >&2 "helm is required for this to run"; exit 1; }
 command -v git >/dev/null 2>&1 || { echo >&2 "git is required for this to run"; exit 1; }
+
+KUBECTL_VERSION="$(kubectl version --client -o json | awk '/gitVersion/ {print$2}' | sed 's/[",v]//g')"
+[[ $KUBECTL_VERSION < "1.14" ]] && { echo "kubectl version must be 1.14 or higher for this to run"; exit 1; }
+
 git submodule init
 git submodule update
 minikube start --cpus=4 --memory='4000mb' --wait=true
@@ -32,3 +36,5 @@ export ISTIO_MINIMAL=true
 ./install-registry.sh
 
 ./install-vault-dev-mode.sh
+
+./install-fluentd.sh
