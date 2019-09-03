@@ -63,7 +63,7 @@ spec:
           path: "/usr/share/ca-certificates"
       containers:
       - name: fluentd
-        image: akkeris/logshuttle-fluentd:update-from-gitlab-15
+        image: akkeris/logshuttle-fluentd:release-16
         securityContext:
           privileged: true
         env:
