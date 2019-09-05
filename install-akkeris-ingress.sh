@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "Installing Akkeris Ingress..."
+
 if [ "$DOMAIN" == "" ]; then
 	echo "The environment variable DOMAIN was not found"
 	exit 1
@@ -43,3 +45,5 @@ helm install ./helm/akkeris-ingress-chart/ --name akkeris-ingress --namespace is
 	--set=regionapisecretvaultpath="$REGION_API_SECRET_VAULT_PATH" \
 	--set=regionapiurl="$REGION_API_URL" \
 	--wait --timeout 600
+
+echo "Installing Akkeris Ingress... Done"

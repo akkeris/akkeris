@@ -1,3 +1,5 @@
+#!/bin/sh
+
 echo "Creating Akkeris service account..."
 
 VAULT_ADDR_IP=`kubectl get services -n akkeris-system vault -o jsonpath='{.spec.clusterIP}'`
@@ -38,7 +40,7 @@ kubectl run -n akkeris-system vault \
   --env="REGIONAPI_PASSWORD=$REGIONAPI_PASSWORD" \
   -- /bin/sh -c \
   ' export VAULT_ADDR=http://$VAULT_SERVICE_HOST:$VAULT_SERVICE_PORT;
-    vault kv put $SVCACCT_TOKEN_PATH token=$SVCACCT_TOKEN_SECRET;
-    vault kv put $REGIONAPI_SECRET_PATH username=$REGIONAPI_USERNAME password=$REGIONAPI_PASSWORD;'
+    vault write $SVCACCT_TOKEN_PATH token=$SVCACCT_TOKEN_SECRET;
+    vault write $REGIONAPI_SECRET_PATH username=$REGIONAPI_USERNAME password=$REGIONAPI_PASSWORD;'
 
 echo "Writing service account token to Vault... done"

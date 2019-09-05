@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set external AWS domain here
+export DOMAIN=""
+
 # Check basic requirements
 command -v minikube >/dev/null 2>&1 || { echo >&2 "minikube is required for this to run"; exit 1; }
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "kubectl is required for this to run"; exit 1; }
@@ -37,16 +40,20 @@ export ISTIO_MINIMAL=true
 
 ./install-influxdb.sh
 
+# Create private (nginx) ingress
 ./install-private-ingress.sh
 
+# Install Docker registry (for build shuttle)
 ./install-registry.sh
 
+# Install Vault, create vault secrets
 ./install-vault-dev-mode.sh
 
 # Create service account for akkeris-system and write token (and regionapi secret) to vault
 ./install-svc-account.sh
 
+# Install logshuttle-fluentd (sends logs to Kafka for logshuttle)
 ./install-fluentd.sh
 
-export DOMAIN="akkeris-test-1.octanner.io"
+# Install Akkeris ingress
 ./install-akkeris-ingress.sh
