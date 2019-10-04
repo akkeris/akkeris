@@ -32,8 +32,8 @@ pilot:
   autoscaleEnabled: false
   resources:
     requests:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 100m
+      memory: 128Mi
 
 galley:
   enabled: true

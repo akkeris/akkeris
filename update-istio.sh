@@ -8,7 +8,7 @@ kubectl label namespace kube-system istio-injection=disabled
 helm repo add istio.io "https://storage.googleapis.com/istio-release/releases/$ISTIO_VERSION/charts/"
 helm repo update
 
-helm upgrade istio-init istio.io/istio-init --version "$ISTIO_VERSION"
+helm upgrade istio-init istio.io/istio-init --version "$ISTIO_VERSION" --force
 
 echo "Waiting for istio CRD jobs to finish"
 sleep 60
