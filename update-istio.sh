@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "$ISTIO_VERSION" == "" ]; then
-	export ISTIO_VERSION="1.2.4"
+	export ISTIO_VERSION="1.2.6"
 fi
 
 kubectl label namespace kube-system istio-injection=disabled
@@ -22,8 +22,8 @@ else
 	helm upgrade istio istio.io/istio \
 		-f "./helm/istio-$ISTIO_VERSION-values.yaml" \
 		--version "$ISTIO_VERSION" \
-  		--set=gateways.sites-public-ingressgateway.type=NodePort \
-  		--set=gateways.sites-private-ingressgateway.type=NodePort \
-  		--set=gateways.apps-public-ingressgateway.type=NodePort \
-  		--set=gateways.apps-private-ingressgateway.type=NodePort
+		--set=gateways.sites-public-ingressgateway.type=NodePort \
+		--set=gateways.sites-private-ingressgateway.type=NodePort \
+		--set=gateways.apps-public-ingressgateway.type=NodePort \
+		--set=gateways.apps-private-ingressgateway.type=NodePort
 fi
