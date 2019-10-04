@@ -1,18 +1,18 @@
 #!/bin/sh
-kubectl create namespace akkeris-system
-kubectl label namespace akkeris-system istio-injection=disabled
-kubectl create namespace sites-system 
-kubectl label namespace kube-system istio-injection=disabled
 
-if [ "$KAFKA_BROKERS" == "" ]; then
-	export LOGGING_SETTINGS="logging.brokers=\"$KAFKA_BROKERS\""
+echo "Installing Akkeris Ingress..."
+
+if [ "$DOMAIN" == "" ]; then
+	echo "The environment variable DOMAIN was not found"
+	exit 1
 fi
-if [ "$KAFKA_ZOOKEEPER" == "" ]; then
-	export LOGGING_SETTINGS="logging.zookeeper=\"$KAFKA_ZOOKEEPER\""
+
+if [ "$NAME" == "" ]; then
+	export NAME="minikube"
 fi
 
 if [ "$LOGGING_SETTINGS" == "" ]; then
-	export LOGGING_SETTINGS="logging.zookeeper=\"kafkalogs-zookeeper.akkeris-system\""
+	export LOGGING_SETTINGS="logging.zookeeper=\"kafkalogs-zookeeper.akkeris-system:2181\""
 fi
 
 if [ "$KUBERNETES_API_URL" == "" ]; then 
@@ -23,29 +23,16 @@ if [ "$REGION_API_URL" == "" ]; then
 	export REGION_API_URL="http://region-api.akkeris-system"
 fi
 
-if [ "$DOMAIN" == "" ]; then
-	echo "The environment variable DOMAIN was not found"
-	exit 1
-fi
-
 if [ "$CLUSTER_ISSUER" == "" ]; then
-	echo "The environment variable CLUSTER_ISSUER was not found"
-	exit 1
+	export CLUSTER_ISSUER="aws"
 fi
 
 if [ "$KUBERNETES_TOKEN_VAULT_PATH" == "" ]; then
-	echo "The environment variable KUBERNETES_TOKEN_VAULT_PATH was not found"
-	exit 1
+	export KUBERNETES_TOKEN_VAULT_PATH="secret/apitoken"
 fi
 
 if [ "$REGION_API_SECRET_VAULT_PATH" == "" ]; then
-	echo "The environment variable REGION_API_SECRET_VAULT_PATH was not found"
-	exit 1
-fi
-
-if [ "$NAME" == "" ]; then
-	echo "The environment variable NAME was not found"
-	exit 1
+	export REGION_API_SECRET_VAULT_PATH="secret/regionapi"
 fi
 
 helm install ./helm/akkeris-ingress-chart/ --name akkeris-ingress --namespace istio-system \
@@ -58,3 +45,5 @@ helm install ./helm/akkeris-ingress-chart/ --name akkeris-ingress --namespace is
 	--set=regionapisecretvaultpath="$REGION_API_SECRET_VAULT_PATH" \
 	--set=regionapiurl="$REGION_API_URL" \
 	--wait --timeout 600
+
+echo "Installing Akkeris Ingress... Done"

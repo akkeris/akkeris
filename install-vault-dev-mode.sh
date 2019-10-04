@@ -3,7 +3,13 @@
 echo "*** DO NOT USE THIS IN PRODUCTIONN ***"
 echo "*** FOR TESTING ONLY ***"
 echo "Installing vault in dev mode... "
-helm install --name=vault --namespace akkeris-system --set='server.dev.enabled=true' ./helm/modules/vault-helm/ --wait --timeout 600
+
+helm install ./helm/modules/vault-helm/ \
+  --name=vault --namespace akkeris-system \
+  --set='server.dev.enabled=true' \
+  --set='global.image=vault:0.6.4' \
+  --wait --timeout 600
+
 kubectl logs vault-0 -n akkeris-system
 echo "Installing vault in dev mode... done"
 

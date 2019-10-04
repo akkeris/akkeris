@@ -1,13 +1,13 @@
 
 #main install
-# TODO: Double check kubectl version! Must be over 1.14!
 # TODO: Reduce (bare minimum) istio install
-# TODO: Install fluentd daemonset
 # TODO: letsencrypt cluster issuer installation (akkeris-test.io ? with staging lets encrypt values...)
-# TODO: Install akkeris ingress
 # TODO: Install akkeris deployments
 # TODO: .... node port ingress & dns ... ?
 
 #registry
 # TODO: use s3 if available?
 # TODO: what about ingress and auth?
+
+# Vault
+# Enable V1 api (instead of using old version of vault)

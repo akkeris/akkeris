@@ -4,7 +4,6 @@ kind: ServiceAccount
 metadata:
   name: logshuttle-fluentd
   namespace: kube-system
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
@@ -21,7 +20,6 @@ rules:
   - get
   - list
   - watch
-
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -50,7 +48,6 @@ spec:
       k8s-app: fluentd-shard
   template:
     metadata:
-      creationTimestamp: 
       labels:
         k8s-app: fluentd-shard
     spec:
@@ -66,10 +63,28 @@ spec:
           path: "/usr/share/ca-certificates"
       containers:
       - name: fluentd
-        image: akkeris/logshuttle-fluentd:release-13
+        image: akkeris/logshuttle-fluentd:release-16
+        securityContext:
+          privileged: true
         env:
-        - name: FLUENTD_ARGS
-          value: ""
+        - name: FLUENT_UID
+          value: "0"
+        - name: FLUENT_KAFKA_BROKERS
+          value: "kafkalogs.akkeris-system.svc.cluster.local"
+        - name: FLUENT_KAFKA_DEFAULT_TOPIC
+          value: "default"
+        - name: FLUENT_KAFKA_OUTPUT_DATA_TYPE
+          value: "json"
+        - name: FLUENT_KAFKA_OUTPUT_INCLUDE_TAG
+          value: "false"
+        - name: FLUENT_KAFKA_OUTPUT_INCLUDE_TIME
+          value: "false"
+        - name: FLUENT_KAFKA_MAX_SEND_RETRIES
+          value: "3"
+        - name: FLUENT_KAFKA_REQUIRED_ACKS
+          value: "0"
+        - name: FLUENT_KAFKA_ACK_TIMEOUT
+          value: "1500"
         resources:
           limits:
             memory: 1000Mi
