@@ -3,7 +3,7 @@
 echo "Installing Istio"
 if [ "$ISTIO_VERSION" == "" ]
 then
-	export ISTIO_VERSION="1.2.4"
+	export ISTIO_VERSION="1.2.8"
 fi
 
 export ISTIO_SUFFIX=""

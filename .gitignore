@@ -5,3 +5,4 @@ install.log
 vault.log
 vault.json
 go.sh
+./helm/akkeris-runtime-chart/update-from-gitlab.sh

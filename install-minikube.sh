@@ -57,3 +57,23 @@ export ISTIO_MINIMAL=true
 
 # Install Akkeris ingress
 ./install-akkeris-ingress.sh
+
+# Create a postgres database for internal systems
+# 
+# UNTESTED:
+#
+#
+helm install --name akkeris-database \
+	--set=postgresqlPassword=changeit \
+	--set=postgresqlDatabase=akkeris \
+	--set=persistance.enabled=false \
+	--set=replication.slaveReplicas=0 \
+	--set=replication.enabled=false \
+	stable/postgresql --namespace=akkeris-system --kube-context minikube
+
+export AKKERIS_DATABASE_URL="postgres://postgres:changeit@akkeris-database.akkeris-system:5432"
+export AKKERIS_DATABASE_HOST="akkeris-database.akkeris-system"
+export AKKERIS_DATABASE_USER="postgres"
+export AKKERIS_DATABASE_PASS="changeit"
+export AKKERIS_DATABASE_PORT="5432"
+./install-akkeris-runtime.sh
