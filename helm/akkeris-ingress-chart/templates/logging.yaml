@@ -55,7 +55,8 @@ spec:
       source: source.labels["app"] | source.workload.name | ""
       source_space: source.labels["namespace"] | source.workload.namespace | ""
       space: destination.labels["namespace"] | destination.workload.namespace | ""
-      status: response.code | 0
+      flags: context.proxy_error_code | ""
+      status: conditional(context.proxy_error_code == "DC", 499, response.code | 0)
       total: response.duration | "0ms"
     monitored_resource_type: '"UNSPECIFIED"'
 ---

@@ -27,19 +27,19 @@ prometheus:
   enabled: true
   resources:
     requests:
-      cpu: 1000m
-      memory: 2Gi
+      cpu: 500m
+      memory: 1Gi
     limits:
       cpu: 2000m
-      memory: 8Gi
+      memory: 6Gi
 
 pilot:
-  autoscaleMin: 2
+  autoscaleMin: 1
   autoscaleMax: 10
   resources:
     requests:
-      cpu: 1000m
-      memory: 2Gi
+      cpu: 500m
+      memory: 1Gi
     limits:
       cpu: 2000m
       memory: 4Gi
@@ -50,7 +50,7 @@ galley:
 mixer:
   policy:
     enabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 7
 
   telemetry:
@@ -78,14 +78,14 @@ gateways:
   sites-public-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 7
     rollingMaxSurge: 100%
     rollingMaxUnavailable: 25%
     resources:
       requests:
-        cpu: 2000m
-        memory: 1024Mi
+        cpu: 500m
+        memory: 128Mi
       limits:
         cpu: 3000m
         memory: 2048Mi
@@ -117,7 +117,7 @@ gateways:
   sites-private-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 5
     rollingMaxSurge: 100%
     rollingMaxUnavailable: 25%
@@ -157,7 +157,7 @@ gateways:
   apps-private-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 5
     rollingMaxSurge: 100%
     rollingMaxUnavailable: 25%
@@ -197,14 +197,14 @@ gateways:
   apps-public-ingressgateway:
     type: LoadBalancer
     autoscaleEnabled: true
-    autoscaleMin: 2
+    autoscaleMin: 1
     autoscaleMax: 7
     rollingMaxSurge: 100%
     rollingMaxUnavailable: 25%
     resources:
       requests:
-        cpu: 2000m
-        memory: 1024Mi
+        cpu: 500m
+        memory: 128Mi
       limits:
         cpu: 3000m
         memory: 2048Mi
