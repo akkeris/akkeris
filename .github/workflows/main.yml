@@ -1,0 +1,17 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Minikube
+      run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube_1.5.2.deb && sudo dpkg -i minikube_1.5.2.deb
+    - name: Install Helm
+      run: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    - name: Start Minikube and Install Akkeris
+      run: sh install-minikube.sh
