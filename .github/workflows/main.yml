@@ -14,4 +14,4 @@ jobs:
     - name: Install Helm
       run: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
     - name: Start Minikube and Install Akkeris
-      run: sh install-minikube.sh
+      run: /bin/bash install-minikube.sh

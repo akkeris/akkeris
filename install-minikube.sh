@@ -17,7 +17,7 @@ git submodule init
 git submodule update
 
 # Spin up minikube
-minikube start --cpus=4 --memory='4000mb' --wait=true --vm-driver=none
+sudo minikube start --cpus=4 --memory='4000mb' --wait=true --vm-driver=none
 minikube addons enable heapster
 minikube addons enable metrics-server
 helm init --kube-context minikube --wait
