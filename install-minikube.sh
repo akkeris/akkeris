@@ -9,19 +9,18 @@ command -v kubectl >/dev/null 2>&1 || { echo >&2 "kubectl is required for this t
 command -v helm >/dev/null 2>&1 || { echo >&2 "helm is required for this to run"; exit 1; }
 command -v git >/dev/null 2>&1 || { echo >&2 "git is required for this to run"; exit 1; }
 
-KUBECTL_VERSION="$(kubectl version --client -o json | awk '/gitVersion/ {print$2}' | sed 's/[",v]//g')"
-[[ $KUBECTL_VERSION < "1.14" ]] && { echo "kubectl version must be 1.14 or higher for this to run"; exit 1; }
+# KUBECTL_VERSION="$(kubectl version --client -o json | awk '/gitVersion/ {print$2}' | sed 's/[",v]//g')"
+# [[ $KUBECTL_VERSION < "1.14" ]] && { echo "kubectl version must be 1.14 or higher for this to run"; exit 1; }
 
 # Fetch helm submodules
-git submodule init
-git submodule update
+# git submodule init
+# git submodule update
 
 # Spin up minikube
-sudo minikube start --cpus=4 --memory='4000mb' --wait=true --vm-driver=none
+minikube start --cpus=4 --memory='4000mb' --wait=true --vm-driver=virtualbox
 minikube addons enable heapster
 minikube addons enable metrics-server
-helm init --kube-context minikube --wait
-
+kubectl config use-context minikube
 # Set up required namespaces
 kubectl label namespace kube-system istio-injection=disabled
 kubectl create namespace akkeris-system --context minikube
@@ -29,6 +28,9 @@ kubectl label namespace akkeris-system istio-injection=disabled --context miniku
 kubectl create namespace sites-system --context minikube
 kubectl label namespace sites-system istio-injection=disabled --context minikube
 
+helm init --wait --kube-context minikube
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
 export KAFKA_MINIMAL=true
 ./install-kafka.sh
 
@@ -39,9 +41,6 @@ export ISTIO_MINIMAL=true
 ./install-istio.sh
 
 ./install-influxdb.sh
-
-# Create private (nginx) ingress
-./install-private-ingress.sh
 
 # Install Docker registry (for build shuttle)
 ./install-registry.sh
@@ -54,6 +53,9 @@ export ISTIO_MINIMAL=true
 
 # Install logshuttle-fluentd (sends logs to Kafka for logshuttle)
 ./install-fluentd.sh
+
+# Create private (nginx) ingress
+./install-private-ingress.sh
 
 # Install Akkeris ingress
 ./install-akkeris-ingress.sh

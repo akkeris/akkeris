@@ -1,0 +1,8 @@
+1. On OSX using virtualbox driver base minikube v1.16.2 
+	- takes 3.65GB of memory, 30 threads, 1/2 CPU right after it says "DONE"
+	- takes 3.67GB of memory, 30 threads, 58% CPU right after enabling heapster and metrics server
+	- takes 3.98GB of memory, 30 threads, 69.5% CPU right after installing zookeeper/kafka
+	- takes 3.98GB of memory, 30 threads, 75% CPU right after installing cert-manager
+	- takes 3.98GB of memory, 30 threads, 125% CPU right after installing istio
+	- takes 3.98GB of memory, 30 threads, 158% CPU right after installing vault
+	- takes 3.98GB of memory, 30 threads, 176% cpu right after installing registry

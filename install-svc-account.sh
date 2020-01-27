@@ -38,9 +38,9 @@ kubectl run -n akkeris-system vault \
   --env="REGIONAPI_SECRET_PATH=$REGIONAPI_SECRET_PATH" \
   --env="REGIONAPI_USERNAME=$REGIONAPI_USERNAME" \
   --env="REGIONAPI_PASSWORD=$REGIONAPI_PASSWORD" \
-  -- /bin/sh -c \
-  ' export VAULT_ADDR=http://$VAULT_SERVICE_HOST:$VAULT_SERVICE_PORT;
-    vault write $SVCACCT_TOKEN_PATH token=$SVCACCT_TOKEN_SECRET;
-    vault write $REGIONAPI_SECRET_PATH username=$REGIONAPI_USERNAME password=$REGIONAPI_PASSWORD;'
+#  -- /bin/sh -c \
+#  ' export VAULT_ADDR=http://$VAULT_SERVICE_HOST:$VAULT_SERVICE_PORT;
+#    vault write $SVCACCT_TOKEN_PATH token=$SVCACCT_TOKEN_SECRET;
+#    vault write $REGIONAPI_SECRET_PATH username=$REGIONAPI_USERNAME password=$REGIONAPI_PASSWORD;'
 
 echo "Writing service account token to Vault... done"
