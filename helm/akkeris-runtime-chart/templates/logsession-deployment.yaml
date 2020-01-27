@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: logsession
+  name: logsession
+  namespace: akkeris-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: logsession
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: logsession
+      name: logsession
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: logsession
+        image: akkeris/logshuttle:release-17
+        imagePullPolicy: IfNotPresent
+        name: logsession
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

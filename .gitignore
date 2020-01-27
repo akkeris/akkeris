@@ -1,4 +1,5 @@
 .DS_Store
+backups-*
 notes
 go.sh
 install.log

@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  annotations:
+  name: logsession-akkeris-system
+  namespace: sites-system
+spec:
+  gateways:
+  - sites-public
+  hosts:
+  - logsession-{{ .Values.name }}.{{ .Values.domain }}
+  http:
+  - route:
+    - destination:
+        host: logsession.akkeris-system.svc.cluster.local
+        port:
+          number: 80

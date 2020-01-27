@@ -1,0 +1,7 @@
+name: "ds1"
+domain: "example.com"
+logsession: 
+  kafkaHosts: "kafkalogs.akkeris-system.svc.cluster.local:9092"
+  authKey: ""
+  postgres: "postgres://"
+  syslog: ""

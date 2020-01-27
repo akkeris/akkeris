@@ -1,0 +1,14 @@
+apiVersion: v1
+data:
+  AUTH_KEY: "{{ .Values.logsession.authKey }}"
+  KAFKA_HOSTS: "{{ .Values.logsession.kafkaHosts }}"
+  PORT: "5000"
+  POSTGRES_URL: "{{ .Values.logsession.database }}"
+  RUN_SESSION: "1"
+  SESSION_URL: https://logsession-{{ .Values.name }}.{{ .Values.domain }}
+  SYSLOG: "{{ .Values.logsession.syslog }}"
+kind: ConfigMap
+metadata:
+  annotations:
+  name: logsession
+  namespace: akkeris-system

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: logsession
+    name: logsession
+  name: logsession
+  namespace: akkeris-system
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    name: logsession
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}
