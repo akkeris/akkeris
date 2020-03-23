@@ -37,6 +37,7 @@ export KAFKA_MINIMAL=true
 ./install-cert-manager.sh
 
 export USE_NODE_PORT_INGRESS=true
+export ISTIO_USE_PROMETHEUS=false
 export ISTIO_MINIMAL=true
 ./install-istio.sh
 

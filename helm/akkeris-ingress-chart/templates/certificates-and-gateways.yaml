@@ -188,3 +188,36 @@ spec:
       mode: SIMPLE
       privateKey: /etc/istio/star-certificate/tls.key
       serverCertificate: /etc/istio/star-certificate/tls.crt
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: meshexpansion-gateway
+  namespace: istio-system
+  labels:
+    app: meshexpansion-gateway
+spec:
+  selector:
+    istio: expansion-ingressgateway
+  servers:
+  - port:
+      number: 15011
+      protocol: TCP
+      name: tcp-pilot
+    hosts:
+    - "*"
+  - port:
+      number: 8060
+      protocol: TCP
+      name: tcp-citadel
+    hosts:
+    - "*"
+  - port:
+      number: 15004
+      name: tls-mixer
+      protocol: TLS
+    tls:
+      mode: AUTO_PASSTHROUGH
+    hosts:
+    - "*"
+# from https://github.com/istio/istio/blob/1.3.6/install/kubernetes/helm/istio/charts/gateways/templates/preconfigured.yaml#L37
