@@ -1,4 +1,4 @@
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
   name: apps-public-certificate
@@ -18,6 +18,7 @@ spec:
     kind: ClusterIssuer
   commonName: '*.{{ required "A valid name entry required!" .Values.name }}.{{ required "A valid domain entry required!" .Values.domain }}'
   dnsNames:
+  - '*.{{.Values.name}}.{{.Values.domain}}'
   - {{.Values.name}}.{{.Values.domain}}
   acme:
     config:
@@ -27,7 +28,7 @@ spec:
       - '*.{{.Values.name}}.{{.Values.domain}}'
       - {{.Values.name}}.{{.Values.domain}}
 ---
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
   name: apps-private-certificate
@@ -47,6 +48,7 @@ spec:
     kind: ClusterIssuer
   commonName: '*.{{.Values.name}}i.{{.Values.domain}}'
   dnsNames:
+  - '*.{{.Values.name}}i.{{.Values.domain}}'
   - {{.Values.name}}i.{{.Values.domain}}
   acme:
     config:
@@ -56,7 +58,7 @@ spec:
       - '*.{{.Values.name}}i.{{.Values.domain}}'
       - {{.Values.name}}i.{{.Values.domain}}
 ---
-apiVersion: certmanager.k8s.io/v1alpha1
+apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
   name: star-certificate
@@ -76,6 +78,7 @@ spec:
     kind: ClusterIssuer
   commonName: '*.{{.Values.domain}}'
   dnsNames:
+  - '*.{{.Values.domain}}'
   - {{.Values.domain}}
   acme:
     config:
@@ -188,36 +191,4 @@ spec:
       mode: SIMPLE
       privateKey: /etc/istio/star-certificate/tls.key
       serverCertificate: /etc/istio/star-certificate/tls.crt
----
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: meshexpansion-gateway
-  namespace: istio-system
-  labels:
-    app: meshexpansion-gateway
-spec:
-  selector:
-    istio: expansion-ingressgateway
-  servers:
-  - port:
-      number: 15011
-      protocol: TCP
-      name: tcp-pilot
-    hosts:
-    - "*"
-  - port:
-      number: 8060
-      protocol: TCP
-      name: tcp-citadel
-    hosts:
-    - "*"
-  - port:
-      number: 15004
-      name: tls-mixer
-      protocol: TLS
-    tls:
-      mode: AUTO_PASSTHROUGH
-    hosts:
-    - "*"
-# from https://github.com/istio/istio/blob/1.3.6/install/kubernetes/helm/istio/charts/gateways/templates/preconfigured.yaml#L37
+

@@ -4,16 +4,17 @@ data:
   DEFAULT_DOMAIN: {{.Values.name}}.{{.Values.domain}}
   INSIDE_DOMAIN: {{.Values.name}}i.{{.Values.domain}}
   KUBERNETES_API_SERVER: {{.Values.kubernetesapiurl}}
-  KUBERNETES_TOKEN_VAULT_PATH: {{.Values.kubernetestokenvaultpath}}
+  KUBERNETES_TOKEN: {{.Values.kubernetestoken}}
   NAMESPACE_BLACKLIST: kube-system,kube-public,quay-enterprise,subsystems,brokers,testcafe,akkeris-system,istio-system,nginx-ingress-i,prometheus,sites-system,velero
-  REGIONAPI_SECRET: {{.Values.regionapisecretvaultpath}}
+  REGIONAPI_PASSWORD: {{.Values.regionapipassword}}
   REGIONAPI_URL: {{.Values.regionapiurl}}
+  REGIONAPI_URL: {{.Values.regionapiusername}}
 kind: ConfigMap
 metadata:
   name: service-watcher-istio
   namespace: akkeris-system
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
@@ -42,46 +43,6 @@ spec:
     spec:
       containers:
       - env:
-        - name: CLUSTER
-          valueFrom:
-            configMapKeyRef:
-              key: CLUSTER
-              name: service-watcher-istio
-        - name: DEFAULT_DOMAIN
-          valueFrom:
-            configMapKeyRef:
-              key: DEFAULT_DOMAIN
-              name: service-watcher-istio
-        - name: INSIDE_DOMAIN
-          valueFrom:
-            configMapKeyRef:
-              key: INSIDE_DOMAIN
-              name: service-watcher-istio
-        - name: KUBERNETES_TOKEN_VAULT_PATH
-          valueFrom:
-            configMapKeyRef:
-              key: KUBERNETES_TOKEN_VAULT_PATH
-              name: service-watcher-istio
-        - name: KUBERNETES_API_SERVER
-          valueFrom:
-            configMapKeyRef:
-              key: KUBERNETES_API_SERVER
-              name: service-watcher-istio
-        - name: NAMESPACE_BLACKLIST
-          valueFrom:
-            configMapKeyRef:
-              key: NAMESPACE_BLACKLIST
-              name: service-watcher-istio
-        - name: REGIONAPI_SECRET
-          valueFrom:
-            configMapKeyRef:
-              key: REGIONAPI_SECRET
-              name: service-watcher-istio
-        - name: REGIONAPI_URL
-          valueFrom:
-            configMapKeyRef:
-              key: REGIONAPI_URL
-              name: service-watcher-istio
         - name: VAULT_ADDR
           valueFrom:
             secretKeyRef:
@@ -92,7 +53,10 @@ spec:
             secretKeyRef:
               key: VAULT_TOKEN
               name: akkeris-system-vault
-        image: akkeris/service-watcher-istio:release-12
+        envFrom:
+        - configMapRef:
+            name: service-watcher-istio
+        image: akkeris/service-watcher-istio:v1.1.0
         imagePullPolicy: IfNotPresent
         name: service-watcher-istio
         ports:
