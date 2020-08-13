@@ -1,0 +1,150 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: meshexpansion-gateway
+  namespace: istio-system
+  labels:
+    app: meshexpansion-gateway
+spec:
+  selector:
+    istio: expansion-ingressgateway
+  servers:
+  - port:
+      number: 443
+      protocol: HTTPS
+      name: https-istio-services
+    hosts:
+    - ...todo...
+    tls:
+      cipherSuites:
+      - ALL
+      credentialName: apps-public-certificate
+      minProtocolVersion: TLSV1_2
+      mode: SIMPLE
+      privateKey: /etc/istio/apps-public-certificate/tls.key
+      serverCertificate: /etc/istio/apps-public-certificate/tls.crt
+  - port:
+      number: 15011
+      protocol: TCP
+      name: tcp-pilot
+    hosts:
+    - "*"
+  - port:
+      number: 15004
+      name: tls-mixer
+      protocol: TLS
+    tls:
+      mode: AUTO_PASSTHROUGH
+    hosts:
+    - "*"
+  - port:
+      number: 8060
+      protocol: TCP
+      name: tcp-citadel
+    hosts:
+    - "*"
+  - port:
+      number: 853
+      name: tcp-dns-tls
+      protocol: TLS
+    tls:
+      credentialName: apps-public-certificate
+      minProtocolVersion: TLSV1_2
+      mode: SIMPLE
+      privateKey: /etc/istio/apps-public-certificate/tls.key
+      serverCertificate: /etc/istio/apps-public-certificate/tls.crt
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+  name: meshexpansion-vs-pilot
+  namespace: istio-system
+spec:
+  gateways:
+  - meshexpansion-gateway
+  hosts:
+  - istio-pilot.istio-system.svc.cluster.local
+  tcp:
+  - match:
+    - port: 15011
+    route:
+    - destination:
+        host: istio-pilot.istio-system.svc.cluster.local
+        port:
+          number: 15011
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  labels:
+  name: meshexpansion-vs-citadel
+  namespace: istio-system
+spec:
+  gateways:
+  - meshexpansion-gateway
+  hosts:
+  - istio-citadel.istio-system.svc.cluster.local
+  tcp:
+  - match:
+    - port: 8060
+    route:
+    - destination:
+        host: istio-citadel.istio-system.svc.cluster.local
+        port:
+          number: 8060
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: meshexpansion-tcp-dns-tls
+  namespace: istio-system
+spec:
+  gateways:
+  - meshexpansion-gateway
+  hosts:
+  - "*"
+  tcp:
+  - match:
+    - port: 853
+    route:
+    - destination:
+        host: kube-dns.kube-system.svc.cluster.local
+        port:
+          number: 53
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: meshexpansion-kiali
+  namespace: istio-system
+spec:
+  gateways:
+  - meshexpansion-gateway
+  hosts:
+  - ...todo...
+  http:
+  - match:
+    - ignoreUriCase: true
+      uri:
+        prefix: /kiali/
+    rewrite:
+      uri: /kiali/
+    route:
+    - destination:
+        host: kiali.istio-system.svc.cluster.local
+        port:
+          number: 20001
+  - match:
+    - ignoreUriCase: true
+      uri:
+        prefix: /kiali
+    rewrite:
+      uri: /kiali
+    route:
+    - destination:
+        host: kiali.istio-system.svc.cluster.local
+        port:
+          number: 20001

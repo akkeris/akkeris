@@ -1,0 +1,357 @@
+serviceAccount:
+  enabled: true
+global:
+  controlPlaneSecurityEnabled: true
+  mtls:
+    # Default setting for service-to-service mtls. Can be set explicitly using
+    # destination rules or service annotations.
+    enabled: false
+  proxy:
+    # We on purpose disable auto injections, if false, only explicit annotations
+    # turn it on, if true on explict annotations turn it off (and everything gets it)
+    # see the table: https://istio.io/help/ops/setup/injection/
+    autoInject: disabled
+    accessLogFile: "/dev/stdout"
+  disablePolicyChecks: false
+  meshExpansion:
+    enabled: true
+  multiCluster:
+      enabled: true
+
+sidecarInjectorWebhook:
+  enabled: true
+  enableNamespacesByDefault: true
+  # If true, webhook or istioctl injector will rewrite PodSpec for liveness
+  # health check to redirect request to sidecar. This makes liveness check work
+  # even when mTLS is enabled.
+  rewriteAppHTTPProbe: false
+
+prometheus:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+
+pilot:
+  autoscaleMin: 1
+  autoscaleMax: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+galley:
+  enabled: true
+
+mixer:
+  policy:
+    enabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 128Mi
+
+  telemetry:
+    enabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+ 
+  adapters:
+    prometheus:
+      enabled: true
+      metricsExpiryDuration: 10m
+ 
+grafana:
+  enabled: true
+
+tracing:
+  enabled: true
+
+kiali:
+  dashboard:
+    auth:
+      strategy: anonymous
+    viewOnlyMode: true
+  enabled: true
+  ingress:
+    enabled: false
+
+gateways:
+  istio-ingressgateway:
+    enabled: false
+  sites-public-ingressgateway:
+    type: LoadBalancer
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    rollingMaxSurge: 100%
+    rollingMaxUnavailable: 25%
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    cpu:
+      targetAverageUtilization: 80
+    labels:
+      app: sites-public-ingressgateway
+      istio: sites-public-ingressgateway
+    enabled: true
+    ports:
+      - port: 80
+        targetPort: 80
+        name: http2
+      - port: 443
+        targetPort: 443
+        name: https
+      - port: 15020
+        name: status-port
+        targetPort: 15020
+      - port: 15000
+        name: http-proxy
+        targetPort: 15000
+      - port: 15443
+        targetPort: 15443
+        name: tls
+    serviceAnnotations:
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    sds:
+      enabled: true
+      image: node-agent-k8s
+  sites-private-ingressgateway:
+    type: LoadBalancer
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    rollingMaxSurge: 100%
+    rollingMaxUnavailable: 25%
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
+    cpu:
+      targetAverageUtilization: 80
+    labels:
+      app: sites-private-ingressgateway
+      istio: sites-private-ingressgateway
+    enabled: true
+    ports:
+      - port: 80
+        targetPort: 80
+        name: http2
+      - port: 443
+        targetPort: 443
+        name: https
+      - port: 15020
+        name: status-port
+        targetPort: 15020
+      - port: 15000
+        name: http-proxy
+        targetPort: 15000
+      - port: 15443
+        targetPort: 15443
+        name: tls
+    serviceAnnotations:
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    sds:
+      enabled: true
+      image: node-agent-k8s
+  apps-private-ingressgateway:
+    type: LoadBalancer
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    rollingMaxSurge: 100%
+    rollingMaxUnavailable: 25%
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
+    cpu:
+      targetAverageUtilization: 80
+    labels:
+      app: apps-private-ingressgateway
+      istio: apps-private-ingressgateway
+    enabled: true
+    ports:
+      - port: 80
+        name: http2
+        targetPort: 80
+      - port: 443
+        targetPort: 443
+        name: https
+      - port: 15020
+        name: status-port
+        targetPort: 15020
+      - port: 15000
+        name: http-proxy
+        targetPort: 15000
+    serviceAnnotations:
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    sds:
+      enabled: true
+      image: node-agent-k8s
+  apps-public-ingressgateway:
+    type: LoadBalancer
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    rollingMaxSurge: 100%
+    rollingMaxUnavailable: 25%
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    cpu:
+      targetAverageUtilization: 80
+    labels:
+      app: apps-public-ingressgateway
+      istio: apps-public-ingressgateway
+    enabled: true
+    ports:
+      - port: 80
+        targetPort: 80
+        name: http2
+      - port: 443
+        name: https
+      - port: 15020
+        name: status-port
+        targetPort: 15020
+      - port: 15000
+        name: http-proxy
+        targetPort: 15000
+      - port: 15443
+        targetPort: 15443
+        name: tls
+    serviceAnnotations:
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    sds:
+      enabled: true
+      image: node-agent-k8s
+  expansion-ingressgateway:
+    type: LoadBalancer
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    rollingMaxSurge: 100%
+    rollingMaxUnavailable: 25%
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 2048Mi
+    cpu:
+      targetAverageUtilization: 80
+    labels:
+      app: expansion-ingressgateway
+      istio: expansion-ingressgateway
+    enabled: true
+    ports:
+    - port: 80
+      name: http2
+      targetPort: 80
+    - port: 443
+      targetPort: 443
+      name: https
+    - port: 15020
+      name: status-port
+      targetPort: 15020
+    - port: 15000
+      name: http-proxy
+      targetPort: 15000
+    - port: 15011
+      targetPort: 15011
+      name: tcp-pilot-grpc-tls
+    - port: 15004
+      targetPort: 15004
+      name: tcp-mixer-grpc-tls
+    - port: 8060
+      targetPort: 8060
+      name: tcp-citadel-grpc-tls
+    - port: 853
+      targetPort: 853
+      name: tcp-dns-tls
+    - port: 15443
+      targetPort: 15443
+      name: tls
+    meshExpansionPorts:
+    - port: 15011
+      targetPort: 15011
+      name: tcp-pilot-grpc-tls
+    - port: 15004
+      targetPort: 15004
+      name: tcp-mixer-grpc-tls
+    - port: 8060
+      targetPort: 8060
+      name: tcp-citadel-grpc-tls
+    - port: 853
+      targetPort: 853
+      name: tcp-dns-tls
+    serviceAnnotations:
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    sds:
+      enabled: true
+      image: node-agent-k8s
+  istio-egressgateway:
+    type: LoadBalancer
+    autoscaleEnabled: true
+    autoscaleMin: 1
+    autoscaleMax: 1
+    rollingMaxSurge: 100%
+    rollingMaxUnavailable: 25%
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 1000m
+        memory: 2048Mi
+    cpu:
+      targetAverageUtilization: 80
+    enabled: true
+    env:
+      ISTIO_META_REQUESTED_NETWORK_VIEW: "external"
+    serviceAnnotations:
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+      service.beta.kubernetes.io/aws-load-balancer-type: nlb

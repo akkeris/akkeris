@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "$ISTIO_VERSION" == "" ]; then
-	export ISTIO_VERSION="1.3.6"
+	export ISTIO_VERSION="1.4.6"
 fi
 if [ "$ISTIO_USE_PROMETHEUS" == "" ]
 then
