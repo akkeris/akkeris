@@ -6,6 +6,7 @@ if [ "$ISTIO_VERSION" != `istioctl version -s --remote=false` ]; then
 	echo "Ensure your istioctl is at version $ISTIO_VERSION and try again."
 	exit 1
 fi
+export CONTEXT=`kubectl config current-context`
 
 kubectl label namespace kube-system istio-injection=disabled
 
