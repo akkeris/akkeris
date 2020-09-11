@@ -9,7 +9,7 @@ spec:
     istiocoredns:
       enabled: false
     kiali:
-      enabled: false
+      enabled: true
       k8s:
         replicaCount: 1
     prometheus:
@@ -22,7 +22,7 @@ spec:
     base:
       enabled: true
     citadel:
-      enabled: true
+      enabled: false
       k8s:
         strategy:
           rollingUpdate:
@@ -304,7 +304,7 @@ spec:
             maxSurge: 100%
             maxUnavailable: 25%
     policy:
-      enabled: true
+      enabled: false
       k8s:
         env:
         - name: POD_NAMESPACE
@@ -329,7 +329,7 @@ spec:
             maxSurge: 100%
             maxUnavailable: 25%
     telemetry:
-      enabled: false
+      enabled: true
       k8s:
         env:
         - name: POD_NAMESPACE
@@ -556,7 +556,7 @@ spec:
         passphraseKey: passphrase
         secretName: kiali
         usernameKey: username
-        viewOnlyMode: false
+        viewOnlyMode: true
       hub: quay.io/kiali
       nodeSelector: {}
       podAntiAffinityLabelSelector: []
@@ -655,7 +655,7 @@ spec:
     telemetry:
       enabled: true
       v1:
-        enabled: true
+        enabled: false
       v2:
         enabled: true
         metadataExchange: {}

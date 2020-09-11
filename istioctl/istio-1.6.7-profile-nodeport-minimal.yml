@@ -86,18 +86,18 @@ spec:
               name: cpu
               targetAverageUtilization: 80
             type: Resource
-          minReplicas: 2
+          minReplicas: 1
           scaleTargetRef:
             apiVersion: apps/v1
             kind: Deployment
             name: apps-public-ingressgateway
         resources:
           limits:
-            cpu: 2000m
+            cpu: 1000m
             memory: 2048Mi
           requests:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 400m
+            memory: 1024Mi
         service:
           type: NodePort
           ports:
@@ -137,18 +137,18 @@ spec:
               name: cpu
               targetAverageUtilization: 80
             type: Resource
-          minReplicas: 2
+          minReplicas: 1
           scaleTargetRef:
             apiVersion: apps/v1
             kind: Deployment
             name: apps-private-ingressgateway
         resources:
           limits:
-            cpu: 2000m
+            cpu: 1000m
             memory: 2048Mi
           requests:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 400m
+            memory: 1024Mi
         service:
           type: NodePort
           ports:
@@ -189,18 +189,18 @@ spec:
               name: cpu
               targetAverageUtilization: 80
             type: Resource
-          minReplicas: 2
+          minReplicas: 1
           scaleTargetRef:
             apiVersion: apps/v1
             kind: Deployment
             name: sites-public-ingressgateway
         resources:
           limits:
-            cpu: 2000m
+            cpu: 1000m
             memory: 2048Mi
           requests:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 400m
+            memory: 1024Mi
         service:
           type: NodePort
           ports:
@@ -240,18 +240,18 @@ spec:
               name: cpu
               targetAverageUtilization: 80
             type: Resource
-          minReplicas: 2
+          minReplicas: 1
           scaleTargetRef:
             apiVersion: apps/v1
             kind: Deployment
             name: sites-private-ingressgateway
         resources:
           limits:
-            cpu: 2000m
+            cpu: 1000m
             memory: 2048Mi
           requests:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 400m
+            memory: 1024Mi
         service:
           type: NodePort
           ports:
@@ -354,10 +354,10 @@ spec:
         replicaCount: 1
         resources:
           limits:
-            cpu: 4800m
+            cpu: 2400m
             memory: 4G
           requests:
-            cpu: 1000m
+            cpu: 500m
             memory: 1G
         strategy:
           rollingUpdate:
