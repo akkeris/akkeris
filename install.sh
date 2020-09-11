@@ -1,5 +1,10 @@
-# prechecks: $CLUSTER?, $VAULT_ADDR and $VAULT_TOKEN, $DOMAIN, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_REGION, EMAIL, INFLUX, $DATABASE_URL <- without database at the end.
-# optional: APPS_PRIVATE_INGRESS, APPS_PUBLIC_INGRESS, SITES_PRIVATE_INGRESS, SITES_PUBLIC_INGRESS, NODEPORT setting?, NAGIOS_IP, $VAULT_PATHS
+# prechecks: $CLUSTER?, $VAULT_ADDR and $VAULT_TOKEN, $DOMAIN, AWS_SECRET_ACCESS_KEY, AWS_ACCESS_KEY_ID, AWS_REGION, EMAIL, INFLUX, $DATABASE_URL <- without database at the end, $AWS_ACCOUNT_ID, $AWS_S3_KMS_KEY_ID, $AWS_ES_KMS_KEY_ID, $AWS_ES_SUBNET_IDS <- subnets separated by comma
+# optional: APPS_PRIVATE_INGRESS, APPS_PUBLIC_INGRESS, SITES_PRIVATE_INGRESS, SITES_PUBLIC_INGRESS, NODEPORT setting?, NAGIOS_ADDRESS, $VAULT_PATHS
+# CONTROLLER_TOKEN,  CONTROLLER_API
+
+# TODO: Hobby db is required, create it now?
+# TODO: service broker mock?
+
 export CLUSTER=`kubectl config current-context`
 kubectl create namespace akkeris-system
 kubectl label namespace akkeris-system istio-injection=disabled
@@ -98,13 +103,16 @@ if [ "$SITES_PUBLIC_INGRESS" == "" ]; then
 	export SITES_PUBLIC_INGRESS=`kubectl get services/sites-public-ingressgateway -o 'jsonpath={.status.loadBalancer.ingress[0].hostname}' -n istio-system`
 fi
 
-if [ "$NAGIOS_IP" == "" ]; then
-	export NAGIOS_IP="127.0.0.1:8081"
+if [ "$NAGIOS_ADDRESS" == "" ]; then
+	export NAGIOS_ADDRESS="127.0.0.1:8081"
 fi
 
 if [ "$VAULT_PATHS" == "" ]; then
 	export VAULT_PATHS="secret/dev,secret/qa,secret/stg,secret/stage,secret/prod"
 fi
+
+export IMAGE_PULL_SECRET="harbor.${DOMAIN}"
+export VAULT_PREFIX="VAULT"
 
 # TODO: install downpage
 # TODO: createdb ${DATABASE_URL}/region-api
@@ -113,8 +121,8 @@ fi
 kubectl apply -f - <<EOF
 apiVersion: v1
 data:
-  ALAMO_API_AUTH_PASSWORD: 
-  ALAMO_API_AUTH_USERNAME: 
+  ALAMO_API_AUTH_PASSWORD: ""
+  ALAMO_API_AUTH_USERNAME: ""
   ALAMO_INTERNAL_URL_TEMPLATE: https://{name}-{space}.${CLUSTER}i.${DOMAIN}/
   ALAMO_URL_TEMPLATE: https://{name}-{space}.${CLUSTER}.${DOMAIN}/
   APPS_PRIVATE_INTERNAL: istio://${APPS_PRIVATE_INGRESS}/istio-system/apps-private-ingressgateway
@@ -123,7 +131,7 @@ data:
   DOMAIN_NAME: ${DOMAIN}
   ENABLE_AUTH: "false"
   EXTERNAL_DOMAIN: ${CLUSTER}.${DOMAIN}
-  IMAGE_PULL_SECRET: harbor.${DOMAIN}
+  IMAGE_PULL_SECRET: ${IMAGE_PULL_SECRET}
   INFLUXDB_BROKER_URL: influx-api.akkeris-system.svc.cluster.local
   INFLUXDB_URL: http://${INFLUX}:8086
   INGRESS_DEBUG: "true"
@@ -131,7 +139,7 @@ data:
   KAFKA_BROKER_URL: http://kafka-api.akkeris-system.svc.cluster.local
   KAFKA_BROKERS: kafkalogs-0.kafkalogs-headless.akkeris-system.svc.cluster.local:9092,kafkalogs-1.kafkalogs-headless.akkeris-system.svc.cluster.local:9092,kafkalogs-2.kafkalogs-headless.akkeris-system.svc.cluster.local:9092
   MARTINI_ENV: production
-  NAGIOS_ADDRESS: ${NAGIOS_IP}
+  NAGIOS_ADDRESS: ${NAGIOS_ADDRESS}
   PITDB: ${DATABASE_URL}/region-api
   PORT: "3600"
   PROMETHEUS_URL: http://prometheus-server.prometheus
@@ -142,7 +150,7 @@ data:
   SITES_PRIVATE_INTERNAL: istio://${SITES_PRIVATE_INGRESS}/istio-system/sites-private-ingressgateway
   SITES_PUBLIC_EXTERNAL: istio://${SITES_PUBLIC_INGRESS}/istio-system/sites-public-ingressgateway
   SITES_PUBLIC_INTERNAL: istio://${SITES_PUBLIC_INGRESS}/istio-system/sites-public-ingressgateway
-  VAULT_PREFIX: VAULT
+  VAULT_PREFIX: ${VAULT_PREFIX}
 kind: ConfigMap
 metadata:
   name: region-api
@@ -176,6 +184,84 @@ metadata:
   name: logsession
   namespace: akkeris-system
 EOF
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  AWS_REGION: ${AWS_REGION}
+  AWS_VPC_SECURITY_GROUPS: ${AWS_VPC_SECURITY_GROUPS}
+  DATABASE_URL: ${DATABASE_URL}/database-broker
+  NAME_PREFIX: ds4
+kind: ConfigMap
+metadata:
+  name: database-broker
+  namespace: akkeris-system
+  selfLink: /api/v1/namespaces/akkeris-system/configmaps/database-broker
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  AWS_KMS_KEY_ID: ${AWS_S3_KMS_KEY_ID}
+  AWS_REGION: ${AWS_REGION}
+  AWS_VPC_SECURITY_GROUPS: ${AWS_VPC_SECURITY_GROUPS}
+  DATABASE_URL: ${DATABASE_URL}/s3-broker
+  NAME_PREFIX: ${CLUSTER}
+kind: ConfigMap
+metadata:
+  name: s3-broker
+  namespace: akkeris-system
+  selfLink: /api/v1/namespaces/akkeris-system/configmaps/s3-broker
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  AWS_REGION: ${AWS_REGION}
+  AWS_VPC_SECURITY_GROUPS: ${AWS_VPC_SECURITY_GROUPS}
+  DATABASE_URL: ${DATABASE_URL}/elasticache-broker
+  ELASTICACHE_SECURITY_GROUP: ${AWS_VPC_SECURITY_GROUPS}
+  MEMCACHED_SUBNET_GROUP: memcached-subnet-group
+  NAME_PREFIX: ${CLUSTER}
+  REDIS_SUBNET_GROUP: redis-subnet-group
+  USE_KUBERNETES: "true"
+kind: ConfigMap
+metadata:
+  namespace: akkeris-system
+  name: elasticache-broker
+  selfLink: /api/v1/namespaces/akkeris-system/configmaps/elasticache-broker
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  AWS_ACCOUNT_ID: ${AWS_ACCOUNT_ID}
+  AWS_KMS_KEY_ID: ${AWS_ES_KMS_KEY_ID}
+  AWS_REGION: ${AWS_REGION}
+  AWS_SECURITY_GROUP_ID: ${AWS_VPC_SECURITY_GROUPS}
+  AWS_SUBNET_ID: ${AWS_ES_SUBNET_IDS}
+  DATABASE_URL: ${DATABASE_URL}/elasticsearch-broker
+  NAME_PREFIX: ds4
+  PORT: "9000"
+kind: ConfigMap
+metadata:
+  name: elasticsearch-broker
+  namespace: akkeris-system
+  selfLink: /api/v1/namespaces/akkeris-system/configmaps/elasticsearch-broker
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+data:
+  NOTIFY: https://${CONTROLLER_TOKEN}@${CONTROLLER_API}/events
+kind: ConfigMap
+metadata:
+  name: apps-watcher
+  namespace: akkeris-system
+  selfLink: /api/v1/namespaces/akkeris-system/configmaps/apps-watcher
+EOF
+
+# TODO: ingress install w/ certificate for region api?
 
 if [ "$FULL_DEPLOYMENT" == "true" ]; then
 

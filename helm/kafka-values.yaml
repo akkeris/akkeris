@@ -1,3 +1,16 @@
-rbac.enabled: true
+external:
+  enabled: true
+  dns:
+    useInternal: true
+    useExternal: false
+  type: LoadBalancer
+  distinct: true
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+  domain: example.com
+persistence:
+  enabled: false
 configurationOverrides:  
   auto.create.topics.enable: true
