@@ -1,0 +1,4 @@
+- add 4 gateways (apps/sites public/private)
+- first-party-jwt on values.global.jwtPolicy
+- enable kaili, grafana, etc
+- meshConfig.defaultConfig.envoyAccessLogService.address=logshuttle.akkeris-system:9001

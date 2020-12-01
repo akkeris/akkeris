@@ -24,8 +24,8 @@ helm repo update
 helm install --name kafkalogs incubator/kafka --namespace akkeris-system -f ./helm/kafka-values.yaml --wait
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-helm install --name cert-manager --namespace cert-manager --version v0.12.0 --set=extraArgs={"--dns01-self-check-nameservers=8.8.8.8:53\,1.1.1.1:53"} --wait --timeout 600 jetstack/cert-manager
-kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.12.0/cert-manager.yaml
+helm install --name cert-manager --namespace cert-manager --version v0.15.0 --set=extraArgs={"--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53"\,"--dns01-recursive-nameservers-only"} --wait --timeout 600 jetstack/cert-manager
+kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.0/cert-manager.yaml
 export AWS_ACCESS_KEY_ID_B64=`echo -n $AWS_ACCESS_KEY_ID | base64`
 export AWS_SECRET_ACCESS_KEY_B64=`echo -n $AWS_SECRET_ACCESS_KEY | base64`
 
@@ -75,6 +75,7 @@ EOF
 
 export KUBE_TOKEN_NAME=`kubectl get secrets -n akkeris-system -o custom-columns=name:{.metadata.name} | grep akkeris | grep token`
 export KUBE_TOKEN=`kubectl get secrets/$KUBE_TOKEN -o jsonpath={.data.token} -n akkeris-system`
+export KUBE_TOKEN=`echo $KUBE_TOKEN | base64 -D`
 kubectl create namespace sites-system
 kubectl label namespace akkeris-system istio-injection=disabled
 helm install ./helm/akkeris-ingress-chart/ --name akkeris-ingress --namespace istio-system \
@@ -82,9 +83,9 @@ helm install ./helm/akkeris-ingress-chart/ --name akkeris-ingress --namespace is
     --set=domain=$DOMAIN \
     --set=clusterissuer=letsencrypt \
     --set=name=$CLUSTER \
-    --set=kubernetesapiurl=kubernetes.default \
+    --set=kubernetesapiurl=https://kubernetes.default \
     --set=kubernetestoken=$KUBE_TOKEN \
-    --set=regionapiurl=http://region-api.akkeris-system \
+    --set=regionapiurl=http://region-api.akkeris-system.svc.cluster.local \
     --set=regionapipassword=
 
 if [ "$APPS_PRIVATE_INGRESS" == "" ]; then
@@ -127,7 +128,7 @@ data:
   ALAMO_URL_TEMPLATE: https://{name}-{space}.${CLUSTER}.${DOMAIN}/
   APPS_PRIVATE_INTERNAL: istio://${APPS_PRIVATE_INGRESS}/istio-system/apps-private-ingressgateway
   APPS_PUBLIC_EXTERNAL: istio://${APPS_PUBLIC_INGRESS}/istio-system/apps-public-ingressgateway
-  APPS_PUBLIC_INTERNAL: istio://${APPS_PUBLIC_INGRESS}/istio-system/apps-public-ingressgateway
+  APPS_PUBLIC_INTERNAL: istio://${APPS_PUBLIC_INGRESS_INTERNAL}/istio-system/apps-public-ingressgateway
   DOMAIN_NAME: ${DOMAIN}
   ENABLE_AUTH: "false"
   EXTERNAL_DOMAIN: ${CLUSTER}.${DOMAIN}
@@ -149,7 +150,7 @@ data:
   SERVICES: http://database-broker-api.akkeris-system,http://elasticache-broker-api.akkeris-system,http://s3-broker-api.akkeris-system,http://elasticsearch-broker-api.akkeris-system,http://cloudfront-broker-api.akkeris-system,http://mongodb-broker-api.akkeris-system,http://rabbitmq-broker-api.akkeris-system
   SITES_PRIVATE_INTERNAL: istio://${SITES_PRIVATE_INGRESS}/istio-system/sites-private-ingressgateway
   SITES_PUBLIC_EXTERNAL: istio://${SITES_PUBLIC_INGRESS}/istio-system/sites-public-ingressgateway
-  SITES_PUBLIC_INTERNAL: istio://${SITES_PUBLIC_INGRESS}/istio-system/sites-public-ingressgateway
+  SITES_PUBLIC_INTERNAL: istio://${SITES_PUBLIC_INGRESS_INTERNAL}/istio-system/sites-public-ingressgateway
   VAULT_PREFIX: ${VAULT_PREFIX}
 kind: ConfigMap
 metadata:
@@ -178,6 +179,7 @@ data:
   KAFKA_HOSTS: kafkalogs-0.kafkalogs-headless.akkeris-system.svc.cluster.local:9092,kafkalogs-1.kafkalogs-headless.akkeris-system.svc.cluster.local:9092,kafkalogs-2.kafkalogs-headless.akkeris-system.svc.cluster.local:9092
   PORT: "5000"
   POSTGRES_URL: ${DATABASE_URL}/logshuttle
+  RUN_SESSION: "1"
   SESSION_URL: https://logsession-${CLUSTER}.${DOMAIN}
 kind: ConfigMap
 metadata:
@@ -191,7 +193,7 @@ data:
   AWS_REGION: ${AWS_REGION}
   AWS_VPC_SECURITY_GROUPS: ${AWS_VPC_SECURITY_GROUPS}
   DATABASE_URL: ${DATABASE_URL}/database-broker
-  NAME_PREFIX: ds4
+  NAME_PREFIX: ${CLUSTER}
 kind: ConfigMap
 metadata:
   name: database-broker
@@ -202,6 +204,7 @@ EOF
 kubectl apply -f - <<EOF
 apiVersion: v1
 data:
+  AWS_ACCOUNT_ID ${AWS_ACCOUNT_ID}
   AWS_KMS_KEY_ID: ${AWS_S3_KMS_KEY_ID}
   AWS_REGION: ${AWS_REGION}
   AWS_VPC_SECURITY_GROUPS: ${AWS_VPC_SECURITY_GROUPS}
@@ -241,7 +244,7 @@ data:
   AWS_SECURITY_GROUP_ID: ${AWS_VPC_SECURITY_GROUPS}
   AWS_SUBNET_ID: ${AWS_ES_SUBNET_IDS}
   DATABASE_URL: ${DATABASE_URL}/elasticsearch-broker
-  NAME_PREFIX: ds4
+  NAME_PREFIX: ${CLUSTER}
   PORT: "9000"
 kind: ConfigMap
 metadata:
