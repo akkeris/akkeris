@@ -2,3 +2,4 @@
 - first-party-jwt on values.global.jwtPolicy
 - enable kaili, grafana, etc
 - meshConfig.defaultConfig.envoyAccessLogService.address=logshuttle.akkeris-system:9001
+  meshConfig.enableEnvoyAccessLogService = true

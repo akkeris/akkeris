@@ -8,6 +8,7 @@ spec:
 
   # You may override parts of meshconfig by uncommenting the following lines.
   meshConfig:
+    enableEnvoyAccessLogService: true
     defaultConfig:
       envoyAccessLogService:
         address: logshuttle.akkeris-system:9001
