@@ -8,3 +8,4 @@ vault.log
 vault.json
 go.sh
 ./helm/akkeris-runtime-chart/update-from-gitlab.sh
+helm/akkeris-api/values_api.yaml
