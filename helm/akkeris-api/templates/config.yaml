@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "akkeris-api.fullname" . }}
+data:
+  OAUTH_USER_URL: {{ .Values.config.values.OAUTH_USER_URL }}
+  CONTROLLER_API_TOKEN: {{ .Values.config.values.CONTROLLER_API_TOKEN }}
+  CONTROLLER_API_URL: {{ .Values.config.values.CONTROLLER_API_URL }}
+  BASIC_ACCESS: {{ .Values.config.values.BASIC_ACCESS }}
+  ELEVATED_ACCESS: {{ .Values.config.values.ELEVATED_ACCESS }}
+  REDIS_URL: {{ .Values.config.values.REDIS_URL }}
+  
